@@ -14,7 +14,6 @@ const result = await Bun.build({
   target: "browser",
   format: "esm",
   minify: true,
-  sourcemap: "linked",
   publicPath: "/engine/",
   loader: {
     ".wgsl": "text",
