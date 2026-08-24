@@ -1,6 +1,0 @@
-export * from "./Material"
-export * from "./MeshBasicMaterial"
-export * from "./LineBasicMaterial"
-export * from "./LineGlowMaterial"
-export * from "./MeshLambertMaterial"
-export * from "./TextMaterial"
