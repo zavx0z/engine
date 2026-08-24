@@ -75,9 +75,12 @@ Useful commands:
 ```bash
 bun run typecheck  # core and Storybook TypeScript contracts
 bun run test       # CPU, shader, pipeline and catalog tests
+bun run test:ci    # deterministic CPU/source tests for runners without a GPU
 bun run build      # static GitHub Pages artifact
 bun run check      # all checks in acceptance order
 ```
+
+The full `bun run test` includes real WebGPU pipeline and pixel-readback tests and therefore requires a usable GPU adapter. GitHub Pages CI runs the deterministic CPU/source suite plus the static browser build; a green Pages workflow is not presented as GPU-rendering proof.
 
 Generated `dist/` files are intentionally ignored. GitHub Actions builds the same artifact from a frozen lockfile before deployment.
 

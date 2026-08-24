@@ -31,7 +31,7 @@ jobs:
         run: bun install --frozen-lockfile
 
       - name: Check workspace
-        run: bun run check
+        run: bun run check:ci
 
       - name: Configure Pages
         uses: actions/configure-pages@v5
