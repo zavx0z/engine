@@ -104,4 +104,4 @@ The compact engine-level invariants live in [`packages/core/contract.md`](./pack
 
 ## License
 
-[ISC](./LICENSE)
+[MIT](./LICENSE)

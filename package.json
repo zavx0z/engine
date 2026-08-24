@@ -9,7 +9,7 @@
     "url": "git+https://github.com/zavx0z/engine.git"
   },
   "metafor": "https://github.com/zavx0z/metafor",
-  "license": "ISC",
+  "license": "MIT",
   "type": "module",
   "packageManager": "bun@1.4.0",
   "workspaces": [
