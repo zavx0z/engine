@@ -70,6 +70,11 @@ Every `Object3D` owns only its local position, rotation, and scale. Engine compu
 
 Framebuffer clipping is material presentation derived from the actual world transform and owning viewport. It does not rewrite geometry. Plain meshes, text, images, and rounded surfaces follow the same optional clip boundary.
 
+Resolved `Object3D.presentationClips` are analytical rounded rectangles in
+their owning local coordinate spaces. Nested shapes intersect in the fragment
+stage, so translation, rotation, scale, and perspective preserve one retained
+presentation boundary without rematerializing descendants.
+
 ### GPU ownership
 
 Renderer owns GPU buffers, textures, bind groups, pipeline selection, upload ranges, and resource invalidation. Consumers describe scene data; they do not allocate hidden renderer resources.
