@@ -20,6 +20,11 @@ The current core was migrated from the accepted `pkg/engine` implementation at M
 
 Engine is deliberately not a product framework. It does not own application state, domain entities, component semantics, or node-authoring policy.
 
+Engine does own the default project TTF as an optional asset. Applications
+declare the URL they serve once in their HTML composition root; the shared
+loader fetches it only when a runtime has not received another font. Importing
+or installing `@engine/core` alone never requests the asset.
+
 ## Packages
 
 | Package | Atom Material icon | Responsibility | Publication |

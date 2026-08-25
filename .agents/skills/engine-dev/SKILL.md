@@ -20,6 +20,12 @@ semantics. Do not add reverse dependencies, compatibility aliases, duplicate
 barrels, or imports from consumer repositories. Storybook consumes only the
 public `@engine/core` boundary.
 
+Engine owns the optional default TTF and the exact
+`@engine/core/default-font` loader. The main entrypoint remains asset-free. A
+browser composition root declares one meta URL; package code must not copy the
+font, invent another default route, or fetch it eagerly. Custom runtime fonts
+bypass the document default.
+
 All directories and filenames are lowercase; multiword filenames use
 kebab-case. Tests end in `.test.ts` and live catalog entries in `.stories.ts`.
 Stories render through the production renderer, remain bounded and
