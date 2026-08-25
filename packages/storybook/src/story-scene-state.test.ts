@@ -1,6 +1,6 @@
 import {describe, expect, test} from "bun:test"
 import {Space} from "@engine/core"
-import type {EngineStory, StoryScene} from "./story"
+import type {EngineStory, StoryScene} from "../../core/storybook/story"
 import {StorySceneState} from "./story-scene-state"
 
 const scene = (x: number): StoryScene => ({
@@ -51,5 +51,18 @@ describe("StorySceneState", () => {
 
     expect(initial?.camera.position.x).toBe(1)
     expect(reset?.camera.position.x).toBe(2)
+  })
+
+  test("invalidates a pending scene before a lazily loaded replacement starts", async () => {
+    let resolvePending: ((value: StoryScene) => void) | undefined
+    const state = new StorySceneState()
+    const pending = state.show(story("pending", () => new Promise<StoryScene>((resolve) => {
+      resolvePending = resolve
+    })))
+
+    state.invalidate()
+    resolvePending?.(scene(3))
+
+    await expect(pending).resolves.toBeNull()
   })
 })

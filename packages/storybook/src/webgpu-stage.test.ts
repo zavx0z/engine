@@ -1,6 +1,6 @@
 import {describe, expect, test} from "bun:test"
 import {Object3D, Space, type Renderer, type ViewPoint} from "@engine/core"
-import type {StoryScene} from "./story"
+import type {StoryScene} from "../../core/storybook/story"
 import {renderStoryScene} from "./webgpu-stage"
 
 describe("WebGpuStage rendering", () => {

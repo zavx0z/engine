@@ -1,5 +1,6 @@
 import type {Space} from "@engine/core"
-import type {StoryIcon} from "./icons"
+
+export type StoryIcon = "architecture" | "geometry" | "hologram" | "text" | "thin-film"
 
 export type CameraPreset = Readonly<{
   position: Readonly<{x: number; y: number; z: number}>

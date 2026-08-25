@@ -1,4 +1,4 @@
-import type {EngineStory, StoryScene} from "./story"
+import type {EngineStory, StoryScene} from "../../core/storybook/story"
 
 export class StorySceneState {
   #story: EngineStory | null = null
@@ -19,5 +19,10 @@ export class StorySceneState {
   async reset(): Promise<StoryScene | null> {
     if (this.#story === null) return null
     return this.show(this.#story)
+  }
+
+  /** Invalidates only an in-flight scene while keeping the last committed story resettable. */
+  invalidate(): void {
+    this.#version += 1
   }
 }

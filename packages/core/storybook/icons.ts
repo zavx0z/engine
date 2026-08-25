@@ -1,4 +1,4 @@
-export type StoryIcon = "architecture" | "geometry" | "hologram" | "text" | "thin-film"
+import type {StoryIcon} from "./story"
 
 type IconDefinition = Readonly<{
   materialIcon: string

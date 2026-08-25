@@ -36,7 +36,17 @@ Both workspaces are `private: true`. Internal means that no package is automatic
 
 ## Storybook
 
-The Storybook is a real browser-rendered catalog, not a collection of screenshots. Every story constructs an `@engine/core` scene and renders it through WebGPU. Navigation is hash-based, assets are emitted under the GitHub Pages project base `/engine/`, and a static fallback is generated for Pages hosting.
+The Storybook is a real browser-rendered catalog, not a collection of
+screenshots. Every story constructs an `@engine/core` scene and renders it
+through WebGPU. Core-owned descriptors live under `packages/core/storybook/**`;
+the private repository app composes them through exact
+`@zavx0z/storybook/*` subpaths.
+
+Navigation uses pathname routes below `/engine/`. Overview routes end in `/`,
+exact leaves do not, and unknown suffixes return 404 instead of selecting a
+fallback scene. The shared five-region Workbench provides Russian navigation,
+source, Copy, controls and events while the preview keeps its own production
+Engine renderer and perspective camera.
 
 Included stories cover:
 
@@ -45,7 +55,10 @@ Included stories cover:
 - a one-pass holographic material;
 - a one-pass thin-film material.
 
-Each story has a lowercase semantic filename ending in `.stories.ts` and an explicit Atom Material Icons association. Icons are stored as local SVG paths so the static catalog does not depend on a remote font or UI runtime.
+Each story has a lowercase semantic filename ending in `.stories.ts` and an
+explicit Atom Material Icons association. Story implementations load through
+separate dynamic imports, so opening one route does not eagerly execute the
+other scenes.
 
 ## Repository map
 
@@ -73,7 +86,9 @@ bun run check
 bun run dev
 ```
 
-`bun run dev` builds the static catalog and serves it at `http://127.0.0.1:4173/engine/`.
+`bun run dev` starts the no-HMR catalog at `http://127.0.0.1:4173/engine/`.
+The browser page is compiled once on its first request and remains stable until
+the exact owned process is restarted.
 
 Useful commands:
 
@@ -87,7 +102,11 @@ bun run check      # all checks in acceptance order
 
 The full `bun run test` includes real WebGPU pipeline and pixel-readback tests and therefore requires a usable GPU adapter. GitHub Pages CI runs the deterministic CPU/source suite plus the static browser build; a green Pages workflow is not presented as GPU-rendering proof.
 
-Generated `dist/` files are intentionally ignored. GitHub Actions builds the same artifact from a frozen lockfile before deployment.
+Generated `dist/` files are intentionally ignored. The static builder writes a
+schema-1 manifest with exact dependency revisions, routes, lazy chunks, sizes
+and SHA-256 hashes. GitHub Pages remains manual and owner-gated; its cold
+workflow must use immutable delivered revisions for shared Storybook, Layout,
+UI and Highlighter before it may be dispatched.
 
 ## Consuming the core locally
 

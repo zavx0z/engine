@@ -1,5 +1,5 @@
 import {Renderer, ViewPoint} from "@engine/core"
-import type {EngineStory, StoryScene} from "./story"
+import type {EngineStory, StoryScene} from "../../core/storybook/story"
 import {StorySceneState} from "./story-scene-state"
 
 export class WebGpuStage {
@@ -9,7 +9,8 @@ export class WebGpuStage {
   readonly #storyState = new StorySceneState()
   #scene: StoryScene | null = null
   #viewPoint: ViewPoint | null = null
-  #frame = 0
+  #rafId = 0
+  #presentedFrames = 0
 
   private constructor(canvas: HTMLCanvasElement) {
     this.#canvas = canvas
@@ -30,33 +31,48 @@ export class WebGpuStage {
     const stage = new WebGpuStage(canvas)
     await stage.#renderer.init(canvas)
     stage.#renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2))
-    stage.#resize()
+    stage.#resize(false)
     return stage
   }
 
-  async show(story: EngineStory): Promise<void> {
-    const scene = await this.#storyState.show(story)
-    if (scene !== null) this.#showScene(scene)
+  get frames(): number {
+    return this.#presentedFrames
   }
 
-  async reset(): Promise<void> {
+  invalidateSelection(): void {
+    this.#storyState.invalidate()
+  }
+
+  async show(story: EngineStory): Promise<boolean> {
+    const scene = await this.#storyState.show(story)
+    if (scene === null) return false
+    this.#showScene(scene)
+    return true
+  }
+
+  async reset(): Promise<boolean> {
     const scene = await this.#storyState.reset()
-    if (scene !== null) this.#showScene(scene)
+    if (scene === null) return false
+    this.#showScene(scene)
+    return true
   }
 
   requestRender(): void {
-    if (this.#frame !== 0) return
-    this.#frame = requestAnimationFrame(() => {
-      this.#frame = 0
-      if (this.#scene === null || this.#viewPoint === null) return
-      renderStoryScene(this.#renderer, this.#scene, this.#viewPoint)
+    if (this.#rafId !== 0) return
+    this.#rafId = requestAnimationFrame(() => {
+      this.#rafId = 0
+      this.#renderNow()
     })
   }
 
   #showScene(scene: StoryScene): void {
     this.#scene = scene
     this.#replaceViewPoint()
-    this.requestRender()
+    if (this.#rafId !== 0) {
+      cancelAnimationFrame(this.#rafId)
+      this.#rafId = 0
+    }
+    this.#renderNow()
   }
 
   #replaceViewPoint(): void {
@@ -74,16 +90,22 @@ export class WebGpuStage {
       far: scene.camera.far ?? 2000,
       fov: Math.PI / 4,
     })
-    this.#resize()
+    this.#resize(false)
   }
 
-  #resize(): void {
+  #resize(request = true): void {
     const width = Math.max(1, this.#canvas.clientWidth)
     const height = Math.max(1, this.#canvas.clientHeight)
     this.#renderer.setSize(width, height)
     this.#viewPoint?.setAspectRatio(width / height)
     this.#scene?.resize?.({width: this.#canvas.width, height: this.#canvas.height})
-    this.requestRender()
+    if (request) this.requestRender()
+  }
+
+  #renderNow(): void {
+    if (this.#scene === null || this.#viewPoint === null) return
+    renderStoryScene(this.#renderer, this.#scene, this.#viewPoint)
+    this.#presentedFrames += 1
   }
 }
 

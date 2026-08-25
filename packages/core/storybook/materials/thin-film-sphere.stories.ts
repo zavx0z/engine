@@ -7,28 +7,11 @@ import {
   SphereGeometry,
   ThinFilmMaterial,
 } from "@engine/core"
-import type {EngineStory} from "../../story"
+import {thinFilmSphereStoryMetadata} from "../metadata"
+import type {EngineStory} from "../story"
 
 export const thinFilmSphereStory: EngineStory = Object.freeze({
-  id: "materials-thin-film-sphere",
-  group: "Materials",
-  title: "Thin-film sphere",
-  icon: "thin-film",
-  materialIcon: "BlurOn",
-  description: "A closed surface with analytical Fresnel, spectral interference, bounded highlights, and no post-processing.",
-  sourceFile: "stories/materials/thin-film-sphere.stories.ts",
-  tags: ["thin film", "Fresnel", "one pass"],
-  source: `const shell = new Mesh(
-  new SphereGeometry({radius: 72, widthSegments: 48, heightSegments: 32}),
-  new ThinFilmMaterial({
-    color: 0x4ecbff,
-    rimColor: 0xf1fbff,
-    opacity: 0.5,
-    iridescence: 0.88,
-    highlightSize: 0.42,
-  }),
-)
-space.add(shell)`,
+  ...thinFilmSphereStoryMetadata,
   createScene() {
     const space = new Space()
     space.background = new Color(0x05070e)

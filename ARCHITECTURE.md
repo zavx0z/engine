@@ -46,6 +46,12 @@ It has no production package dependencies. Browser and WebGPU APIs are the runti
 
 The Storybook is a static consumer of the public `@engine/core` entrypoint. It must not bypass the package boundary with relative imports into Core.
 
+Core-owned development descriptors live in `packages/core/storybook/**`, next
+to their semantic owner but outside `@engine/core` exports and production
+TypeScript project. The private repository Storybook composes those descriptors
+through `@zavx0z/storybook/stories`; it does not copy scene semantics into the
+application package.
+
 Its responsibilities are:
 
 - construct small, observable live scenes;
@@ -53,6 +59,12 @@ Its responsibilities are:
 - verify project-base-safe static output;
 - provide a public documentation surface;
 - remain deployable as plain files under `/engine/`.
+
+The app uses the shared five-region Workbench from exact
+`@zavx0z/storybook/*` subpaths. Layout and UI are direct dependencies only of
+this private development app. The preview is an Engine-owned canvas layered
+inside the shared preview frame, so its perspective camera, orbit/pan input and
+production renderer remain intact without adding UI dependencies to Core.
 
 The Storybook is not an alternate renderer and does not own Engine features.
 
@@ -99,6 +111,7 @@ All directories and filenames are lowercase. Multiword filenames use kebab-case.
 
 ```text
 packages/core/
+  storybook/    development-only owner descriptors and lazy scene modules
   src/
     animation/   temporal transforms
     core/        retained objects and geometry buffers
@@ -122,14 +135,24 @@ Tests are co-located with their owner as `*.test.ts`. Live catalog stories are `
 
 ## Static Storybook pipeline
 
-`packages/storybook/scripts/build.ts` uses Bun's HTML bundler with the WGSL text loader. The artifact is emitted with the public base `/engine/`, then receives:
+`packages/storybook/scripts/build.ts` delegates the typed Engine app manifest
+to `@zavx0z/storybook/build`. The artifact is emitted with public base
+`/engine/` and contains:
 
 - `index.html` for the project root;
 - `404.html` as a static Pages fallback;
 - `.nojekyll` to preserve emitted asset names;
-- bundled JavaScript, CSS, font and source maps.
+- independent browser entry and lazy story chunks;
+- the exact Engine font;
+- `storybook-manifest.json` schema 1 with source/dependency revisions,
+  readiness and canvas evidence, emitted sizes and SHA-256 hashes.
 
-Story navigation uses URL hashes, so every story remains addressable without server-side routing. The Pages workflow runs type checking, all tests, and the production build before uploading the artifact.
+Story navigation uses pathname routes. Overview routes end in `/`, exact detail
+routes do not, and unknown suffixes fail closed instead of selecting a fallback
+story. The Pages fallback recovers only a route registered in the catalog.
+Pages remains manual and may run only after shared dependencies are delivered
+at immutable revisions and its cold bootstrap pins are updated; a local link
+graph or successful local build is not deployment evidence.
 
 ## Performance change gate
 

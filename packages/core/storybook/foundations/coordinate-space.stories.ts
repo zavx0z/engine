@@ -7,28 +7,11 @@ import {
   MeshBasicMaterial,
   Space,
 } from "@engine/core"
-import type {EngineStory} from "../../story"
+import {coordinateSpaceStoryMetadata} from "../metadata"
+import type {EngineStory} from "../story"
 
 export const coordinateSpaceStory: EngineStory = Object.freeze({
-  id: "foundations-coordinate-space",
-  group: "Foundations",
-  title: "Coordinate space",
-  icon: "architecture",
-  materialIcon: "Hub",
-  description: "A retained Z-up scene expressed in millimetres, with a single inherited transform tree.",
-  sourceFile: "stories/foundations/coordinate-space.stories.ts",
-  tags: ["Z-up", "millimetres", "retained scene"],
-  source: `const space = new Space()
-space.background = new Color(0x070b12)
-space.add(new GridHelper(360, 18))
-space.add(new AxesHelper(120))
-
-const box = new Mesh(
-  new BoxGeometry({width: 90, height: 70, depth: 60}),
-  new MeshBasicMaterial({color: 0x79a7ff}),
-)
-box.position.z = 30
-space.add(box)`,
+  ...coordinateSpaceStoryMetadata,
   createScene() {
     const space = new Space()
     space.background = new Color(0x070b12)

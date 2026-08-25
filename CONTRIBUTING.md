@@ -62,6 +62,8 @@ Core production code has no external package dependencies. Adding one changes th
 
 A useful story:
 
+- lives below `packages/core/storybook/**` beside the semantic owner while
+  remaining outside production exports;
 - imports only from `@engine/core`;
 - builds one bounded scene that demonstrates a real contract;
 - renders through the production `Renderer`;
@@ -69,6 +71,11 @@ A useful story:
 - works from the static `/engine/` project base;
 - does not use a screenshot as a substitute for live output;
 - remains legible when WebGPU is unavailable by exposing metadata and an error state.
+
+The repository app gives each story one exact three-level pathname. Overview
+prefixes end in `/`; leaves do not. Unknown routes must fail closed. Keep eager
+metadata small and load every scene implementation through its own dynamic
+import.
 
 Stories render on demand. Do not introduce an unconditional animation loop for a static contract.
 
