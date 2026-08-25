@@ -1,11 +1,12 @@
 import {Renderer, ViewPoint} from "@engine/core"
 import type {EngineStory, StoryScene} from "./story"
+import {StorySceneState} from "./story-scene-state"
 
 export class WebGpuStage {
   readonly #canvas: HTMLCanvasElement
   readonly #renderer = new Renderer()
   readonly #resizeObserver: ResizeObserver
-  #story: EngineStory | null = null
+  readonly #storyState = new StorySceneState()
   #scene: StoryScene | null = null
   #viewPoint: ViewPoint | null = null
   #frame = 0
@@ -33,18 +34,14 @@ export class WebGpuStage {
     return stage
   }
 
-  show(story: EngineStory): void {
-    this.#story = story
-    this.#scene = story.createScene()
-    this.#replaceViewPoint()
-    this.requestRender()
+  async show(story: EngineStory): Promise<void> {
+    const scene = await this.#storyState.show(story)
+    if (scene !== null) this.#showScene(scene)
   }
 
-  reset(): void {
-    if (this.#story === null) return
-    this.#scene = this.#story.createScene()
-    this.#replaceViewPoint()
-    this.requestRender()
+  async reset(): Promise<void> {
+    const scene = await this.#storyState.reset()
+    if (scene !== null) this.#showScene(scene)
   }
 
   requestRender(): void {
@@ -54,6 +51,12 @@ export class WebGpuStage {
       if (this.#scene === null || this.#viewPoint === null) return
       this.#renderer.render(this.#scene.space, this.#viewPoint)
     })
+  }
+
+  #showScene(scene: StoryScene): void {
+    this.#scene = scene
+    this.#replaceViewPoint()
+    this.requestRender()
   }
 
   #replaceViewPoint(): void {
@@ -79,6 +82,7 @@ export class WebGpuStage {
     const height = Math.max(1, this.#canvas.clientHeight)
     this.#renderer.setSize(width, height)
     this.#viewPoint?.setAspectRatio(width / height)
+    this.#scene?.resize?.({width: this.#canvas.width, height: this.#canvas.height})
     this.requestRender()
   }
 }

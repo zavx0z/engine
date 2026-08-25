@@ -2,6 +2,7 @@ import {coordinateSpaceStory} from "./stories/foundations/coordinate-space.stori
 import {instancedBoxesStory} from "./stories/geometry/instanced-boxes.stories"
 import {holographicTorusStory} from "./stories/materials/holographic-torus.stories"
 import {thinFilmSphereStory} from "./stories/materials/thin-film-sphere.stories"
+import {textStencilClippingStory} from "./stories/text/stencil-clipping.stories"
 import type {EngineStory} from "./story"
 
 export const stories: readonly EngineStory[] = Object.freeze([
@@ -9,6 +10,7 @@ export const stories: readonly EngineStory[] = Object.freeze([
   instancedBoxesStory,
   holographicTorusStory,
   thinFilmSphereStory,
+  textStencilClippingStory,
 ])
 
 export function storyHash(story: EngineStory): string {

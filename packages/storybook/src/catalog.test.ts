@@ -22,4 +22,14 @@ describe("engine story catalog", () => {
     for (const story of stories) expect(resolveStory(storyHash(story))).toBe(story)
     expect(resolveStory("#/missing")).toBe(stories[0]!)
   })
+
+  test("publishes the text stencil clipping regression story", () => {
+    const story = stories.find((candidate) => candidate.id === "text-stencil-clipping")
+
+    expect(story?.group).toBe("Text")
+    expect(story?.title).toBe("Stencil-обрезка текста")
+    expect(story?.description).toMatch(/[\u0400-\u04ff]/)
+    expect(story?.source).toContain("clipBounds")
+    expect(story === undefined ? "" : storyHash(story)).toBe("#/story/text-stencil-clipping")
+  })
 })

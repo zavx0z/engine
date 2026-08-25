@@ -1,4 +1,4 @@
-export type StoryIcon = "architecture" | "geometry" | "hologram" | "thin-film"
+export type StoryIcon = "architecture" | "geometry" | "hologram" | "text" | "thin-film"
 
 type IconDefinition = Readonly<{
   materialIcon: string
@@ -18,6 +18,10 @@ export const storyIcons: Readonly<Record<StoryIcon, IconDefinition>> = Object.fr
   hologram: {
     materialIcon: "AutoAwesome",
     path: "m12 2 1.4 4.6L18 8l-4.6 1.4L12 14l-1.4-4.6L6 8l4.6-1.4L12 2Zm6 10 .9 3.1L22 16l-3.1.9L18 20l-.9-3.1L14 16l3.1-.9L18 12ZM6 13l1.1 3.9L11 18l-3.9 1.1L6 23l-1.1-3.9L1 18l3.9-1.1L6 13Z",
+  },
+  text: {
+    materialIcon: "TextFields",
+    path: "M5 4v3h5.5v13h3V7H19V4H5Z",
   },
   "thin-film": {
     materialIcon: "BlurOn",

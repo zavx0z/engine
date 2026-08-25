@@ -26,9 +26,16 @@ const shell = required<HTMLElement>("[data-shell]")
 let stage: WebGpuStage | null = null
 let currentStory: EngineStory | null = null
 
+const showStageError = (error: unknown): void => {
+  status.textContent = "Story failed"
+  status.dataset.state = "error"
+  errorPanel.hidden = false
+  errorPanel.textContent = error instanceof Error ? error.message : String(error)
+}
+
 const renderNavigation = (): void => {
   navigation.replaceChildren()
-  for (const group of ["Foundations", "Geometry", "Materials"] as const) {
+  for (const group of ["Foundations", "Geometry", "Materials", "Text"] as const) {
     const section = document.createElement("section")
     section.className = "navigation-group"
     const heading = document.createElement("h2")
@@ -72,7 +79,7 @@ const showStory = (): void => {
   if (location.hash !== storyHash(story)) history.replaceState(null, "", storyHash(story))
   currentStory = story
   renderMetadata(story)
-  stage?.show(story)
+  if (stage !== null) void stage.show(story).catch(showStageError)
 }
 
 const initialize = async (): Promise<void> => {
@@ -89,7 +96,7 @@ const initialize = async (): Promise<void> => {
   try {
     status.textContent = "Initializing WebGPU"
     stage = await WebGpuStage.create(canvas)
-    if (currentStory !== null) stage.show(currentStory)
+    if (currentStory !== null) await stage.show(currentStory)
     status.textContent = "Ready · renders on demand"
     status.dataset.state = "ready"
   } catch (error) {
@@ -101,7 +108,9 @@ const initialize = async (): Promise<void> => {
 }
 
 window.addEventListener("hashchange", showStory)
-resetButton.addEventListener("click", () => stage?.reset())
+resetButton.addEventListener("click", () => {
+  if (stage !== null) void stage.reset().catch(showStageError)
+})
 menuButton.addEventListener("click", () => {
   const open = shell.toggleAttribute("data-menu-open")
   menuButton.setAttribute("aria-expanded", String(open))

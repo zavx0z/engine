@@ -1,6 +1,6 @@
 @font-face {
   font-family: "JetBrains Mono";
-  src: url("../../core/static/fonts/jetbrains-mono-bold.ttf") format("truetype");
+  src: url("/engine/fonts/jetbrains-mono-bold.ttf") format("truetype");
   font-display: swap;
   font-weight: 700;
 }

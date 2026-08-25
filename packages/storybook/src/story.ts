@@ -11,11 +11,12 @@ export type CameraPreset = Readonly<{
 export type StoryScene = Readonly<{
   space: Space
   camera: CameraPreset
+  resize?(viewport: Readonly<{width: number; height: number}>): void
 }>
 
 export type EngineStory = Readonly<{
   id: string
-  group: "Foundations" | "Geometry" | "Materials"
+  group: "Foundations" | "Geometry" | "Materials" | "Text"
   title: string
   icon: StoryIcon
   materialIcon: string
@@ -23,5 +24,5 @@ export type EngineStory = Readonly<{
   sourceFile: string
   tags: readonly string[]
   source: string
-  createScene(): StoryScene
+  createScene(): StoryScene | Promise<StoryScene>
 }>
