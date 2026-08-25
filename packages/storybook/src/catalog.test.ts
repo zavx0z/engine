@@ -29,7 +29,22 @@ describe("engine story catalog", () => {
     expect(story?.group).toBe("Text")
     expect(story?.title).toBe("Stencil-обрезка текста")
     expect(story?.description).toMatch(/[\u0400-\u04ff]/)
-    expect(story?.source).toContain("clipBounds")
+    expect(story?.description).toContain("Пиксели")
+    expect(story?.source).toContain("PresentationClipShape")
+    expect(story?.source).toContain('kind: "rounded-rect"')
+    expect(story?.source.match(/\.presentationClips = /g)).toHaveLength(2)
+    expect(story?.source).not.toContain("clipBounds")
     expect(story === undefined ? "" : storyHash(story)).toBe("#/story/text-stencil-clipping")
+  })
+
+  test("implements the text clipping proof through the public Engine clip API", async () => {
+    const source = await Bun.file(new URL("./stories/text/stencil-clipping.stories.ts", import.meta.url)).text()
+
+    expect(source).toContain('from "@engine/core"')
+    expect(source).toContain("type PresentationClipShape")
+    expect(source).toContain('kind: "rounded-rect"')
+    expect(source.match(/\.presentationClips = /g)?.length).toBeGreaterThanOrEqual(4)
+    expect(source.match(/position\.set\([^\n]+, lineY, 3\)/g)).toHaveLength(2)
+    expect(source).not.toContain("clipBounds")
   })
 })

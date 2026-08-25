@@ -49,7 +49,7 @@ export class WebGpuStage {
     this.#frame = requestAnimationFrame(() => {
       this.#frame = 0
       if (this.#scene === null || this.#viewPoint === null) return
-      this.#renderer.render(this.#scene.space, this.#viewPoint)
+      renderStoryScene(this.#renderer, this.#scene, this.#viewPoint)
     })
   }
 
@@ -85,4 +85,13 @@ export class WebGpuStage {
     this.#scene?.resize?.({width: this.#canvas.width, height: this.#canvas.height})
     this.requestRender()
   }
+}
+
+export function renderStoryScene(
+  renderer: Pick<Renderer, "render">,
+  scene: StoryScene,
+  viewPoint: ViewPoint,
+): void {
+  scene.space.updateWorldMatrix()
+  renderer.render(scene.space, viewPoint)
 }

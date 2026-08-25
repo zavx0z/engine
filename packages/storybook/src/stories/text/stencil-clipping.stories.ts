@@ -3,6 +3,8 @@ import {
   Mesh,
   MeshBasicMaterial,
   PlaneGeometry,
+  type PresentationClipShape,
+  RoundedRectMaterial,
   Space,
   Text,
   TextMaterial,
@@ -10,13 +12,31 @@ import {
 import {loadDocumentDefaultFont} from "@engine/core/default-font"
 import type {EngineStory} from "../../story"
 
-const panel = (x: number, color: number): Mesh => {
+const PANEL_WIDTH = 270
+const PANEL_HEIGHT = 200
+const PANEL_RADIUS = 24
+
+const panel = (x: number, fill: number): Readonly<{mesh: Mesh; clip: PresentationClipShape}> => {
   const mesh = new Mesh(
-    new PlaneGeometry({width: 270, height: 200}),
-    new MeshBasicMaterial({color}),
+    new PlaneGeometry({width: PANEL_WIDTH, height: PANEL_HEIGHT}),
+    new RoundedRectMaterial({
+      width: PANEL_WIDTH,
+      height: PANEL_HEIGHT,
+      radius: PANEL_RADIUS,
+      fill,
+      border: 0x5f7694,
+      borderWidth: 2,
+    }),
   )
   mesh.position.set(x, 0, 0)
-  return mesh
+  const clip: PresentationClipShape = {
+    kind: "rounded-rect",
+    coordinateSpace: mesh,
+    center: [0, 0],
+    halfSize: [PANEL_WIDTH / 2, PANEL_HEIGHT / 2],
+    radii: [PANEL_RADIUS, PANEL_RADIUS, PANEL_RADIUS, PANEL_RADIUS],
+  }
+  return {mesh, clip}
 }
 
 export const textStencilClippingStory: EngineStory = Object.freeze({
@@ -25,23 +45,28 @@ export const textStencilClippingStory: EngineStory = Object.freeze({
   title: "Stencil-обрезка текста",
   icon: "text",
   materialIcon: "TextFields",
-  description: "Длинная строка обязана закончиться на вертикальном split. Справа остаётся только независимая подпись; любые ghost-фрагменты означают регрессию stencil/cover clipping.",
+  description: "Две отдельные скруглённые панели задают public presentation clips. Пиксели длинной левой строки физически доходят до правой области, но rounded clip удаляет их до stencil и cover; на той же высоте остаётся только независимый CLEAN LABEL. Подписи вынесены отдельной строкой.",
   sourceFile: "stories/text/stencil-clipping.stories.ts",
-  tags: ["framebuffer clip", "stencil pass", "independent cover"],
-  source: `const clipped = new Text(longValue, font, 28, clippedMaterial)
-const neighbor = new Text("CLEAN LABEL", font, 28, neighborMaterial)
+  tags: ["presentation clip", "rounded clip chain", "text stencil"],
+  source: `const leftClip: PresentationClipShape = {
+  kind: "rounded-rect",
+  coordinateSpace: leftPanel,
+  center: [0, 0],
+  halfSize: [135, 100],
+  radii: [24, 24, 24, 24],
+}
 
-resize(({width, height}) => {
-  const split = Math.floor(width / 2)
-  clipped.clipBounds = [0, 0, split, height]
-  neighbor.clipBounds = [split, 0, width, height]
-})`,
+overflow.presentationClips = [leftClip]
+cleanLabel.presentationClips = [rightClip]`,
   async createScene() {
     const font = await loadDocumentDefaultFont()
     const space = new Space()
     space.background = new Color(0x090c12)
-    space.add(panel(-142, 0x162a45))
-    space.add(panel(142, 0x173a2e))
+
+    const left = panel(-142, 0x162a45)
+    const right = panel(142, 0x173a2e)
+    space.add(left.mesh)
+    space.add(right.mesh)
 
     const divider = new Mesh(
       new PlaneGeometry({width: 4, height: 220}),
@@ -51,40 +76,45 @@ resize(({width, height}) => {
     space.add(divider)
 
     const leftCaption = new Text(
-      "CLIPPED AT SPLIT",
+      "LEFT · ROUNDED PIXEL CLIP",
       font,
       14,
       new TextMaterial({color: 0xb8c6da}),
     )
     leftCaption.position.set(-250, 58, 3)
+    leftCaption.presentationClips = [left.clip]
     space.add(leftCaption)
 
     const rightCaption = new Text(
-      "ONLY CLEAN LABEL BELOW",
+      "RIGHT · INDEPENDENT COVER",
       font,
       14,
       new TextMaterial({color: 0xb8d8cd}),
     )
     rightCaption.position.set(25, 58, 3)
+    rightCaption.presentationClips = [right.clip]
     space.add(rightCaption)
 
-    const clipped = new Text(
-      "CLIPPED TEXT STOPS HERE  OVERFLOW OVERFLOW OVERFLOW",
+    const lineY = -30
+    const overflow = new Text(
+      "LEFT OVERFLOW MUST STOP AT THE ROUNDED PANEL · OVERFLOW OVERFLOW OVERFLOW",
       font,
       28,
       new TextMaterial({color: 0x79a7ff}),
     )
-    clipped.position.set(-250, -30, 3)
-    space.add(clipped)
+    overflow.position.set(-250, lineY, 3)
+    overflow.presentationClips = [left.clip]
+    space.add(overflow)
 
-    const neighbor = new Text(
+    const cleanLabel = new Text(
       "CLEAN LABEL",
       font,
       28,
       new TextMaterial({color: 0x8af0cf}),
     )
-    neighbor.position.set(25, -30, 3)
-    space.add(neighbor)
+    cleanLabel.position.set(25, lineY, 3)
+    cleanLabel.presentationClips = [right.clip]
+    space.add(cleanLabel)
 
     return {
       space,
@@ -93,13 +123,6 @@ resize(({width, height}) => {
         target: {x: 0, y: 0, z: 0},
         near: 1,
         far: 1200,
-      },
-      resize({width, height}) {
-        const split = Math.floor(width / 2)
-        leftCaption.clipBounds = [0, 0, split, height]
-        rightCaption.clipBounds = [split, 0, width, height]
-        clipped.clipBounds = [0, 0, split, height]
-        neighbor.clipBounds = [split, 0, width, height]
       },
     }
   },
