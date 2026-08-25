@@ -68,4 +68,40 @@ describe("Engine Storybook static build source", () => {
     expect(source).not.toContain("rm(outputRoot")
     expect(source).not.toContain("copyFile")
   })
+
+  test("pins and registers the complete cold Pages dependency graph", async () => {
+    const workflow = await Bun.file(new URL("../../../.github/workflows/pages.yml", import.meta.url)).text()
+    const pins = [
+      ["zavx0z/layout", "30cf6b686c4117238693bd2c5aeb58c2c49a9dbc"],
+      ["zavx0z/ui", "1ab29de686b1bb238d43e37a55d9ed428ccc799d"],
+      ["zavx0z/highlighter", "a9f240b682a6ccec042ea04522220f153d3b53eb"],
+      ["zavx0z/storybook", "bbacaa721b9327dc771f348f017bd6e0a7cef3df"],
+    ] as const
+
+    expect(workflow).toContain("  workflow_dispatch:")
+    for (const [repository, revision] of pins) {
+      expect(workflow, repository).toContain(`repository: ${repository}`)
+      expect(workflow, repository).toContain(`ref: ${revision}`)
+    }
+
+    const bootstrap = [
+      "name: Register Engine package",
+      "name: Register Layout package",
+      "name: Register UI Elements package",
+      "name: Register UI Components package",
+      "name: Install and verify Highlighter dependency",
+      "name: Register Highlighter package",
+      "name: Install shared Storybook dependencies",
+      "name: Register shared Storybook package",
+      "name: Install Layout dependencies",
+      "name: Install UI dependencies",
+      "name: Install Engine dependencies",
+    ]
+    const positions = bootstrap.map((marker) => workflow.indexOf(marker))
+    expect(positions.every((position) => position >= 0)).toBeTrue()
+    expect(positions).toEqual([...positions].sort((left, right) => left - right))
+    expect(workflow.match(/run: bun link/g)?.length).toBe(6)
+    expect(workflow.match(/bun install --frozen-lockfile/g)?.length).toBe(5)
+    expect(workflow).toContain("path: packages/storybook/dist")
+  })
 })

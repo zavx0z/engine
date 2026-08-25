@@ -94,7 +94,7 @@ Before handing off a visual change, also inspect the live story in a WebGPU brow
 
 ## Generated output
 
-Do not commit `dist/`, dependency directories, logs, or local environment files. GitHub Actions builds the Pages artifact from `bun.lock` with `bun install --frozen-lockfile`.
+Do not commit `dist/`, dependency directories, logs, or local environment files. GitHub Actions checks out exact Layout, UI, Highlighter, and shared Storybook revisions, registers their direct package owners, then builds the Pages artifact from every locked install with `bun install --frozen-lockfile`.
 
 The workflow deploys only after checks pass. Enabling Pages, changing repository settings, publishing packages, or updating sibling consumers are separate owner-controlled actions.
 

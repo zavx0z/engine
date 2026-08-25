@@ -19,12 +19,80 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v6
 
+      - name: Check out Layout dependency
+        uses: actions/checkout@v6
+        with:
+          repository: zavx0z/layout
+          ref: 30cf6b686c4117238693bd2c5aeb58c2c49a9dbc
+          path: .deps/layout
+
+      - name: Check out UI dependency
+        uses: actions/checkout@v6
+        with:
+          repository: zavx0z/ui
+          ref: 1ab29de686b1bb238d43e37a55d9ed428ccc799d
+          path: .deps/ui
+
+      - name: Check out Highlighter dependency
+        uses: actions/checkout@v6
+        with:
+          repository: zavx0z/highlighter
+          ref: a9f240b682a6ccec042ea04522220f153d3b53eb
+          path: .deps/highlighter
+
+      - name: Check out shared Storybook dependency
+        uses: actions/checkout@v6
+        with:
+          repository: zavx0z/storybook
+          ref: bbacaa721b9327dc771f348f017bd6e0a7cef3df
+          path: .deps/storybook
+
       - name: Set up Bun
         uses: oven-sh/setup-bun@v2
         with:
           bun-version-file: .bun-version
 
-      - name: Install dependencies
+      - name: Register Engine package
+        working-directory: packages/core
+        run: bun link
+
+      - name: Register Layout package
+        working-directory: .deps/layout/packages/core
+        run: bun link
+
+      - name: Register UI Elements package
+        working-directory: .deps/ui/packages/elements
+        run: bun link
+
+      - name: Register UI Components package
+        working-directory: .deps/ui/packages/components
+        run: bun link
+
+      - name: Install and verify Highlighter dependency
+        working-directory: .deps/highlighter
+        run: bun install --frozen-lockfile && bun run check
+
+      - name: Register Highlighter package
+        working-directory: .deps/highlighter
+        run: bun link
+
+      - name: Install shared Storybook dependencies
+        working-directory: .deps/storybook
+        run: bun install --frozen-lockfile
+
+      - name: Register shared Storybook package
+        working-directory: .deps/storybook
+        run: bun link
+
+      - name: Install Layout dependencies
+        working-directory: .deps/layout
+        run: bun install --frozen-lockfile
+
+      - name: Install UI dependencies
+        working-directory: .deps/ui
+        run: bun install --frozen-lockfile
+
+      - name: Install Engine dependencies
         run: bun install --frozen-lockfile
 
       - name: Check workspace
