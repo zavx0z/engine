@@ -41,6 +41,12 @@ bun run build
 required and a usable adapter is available. A green CPU/static build is not GPU
 or visual proof.
 
+GitHub Pages deployment is manual and owner-gated. Never dispatch
+`.github/workflows/pages.yml`, run `gh workflow run`, change repository Pages
+settings, or deploy an artifact unless the owner explicitly requests deployment
+in the current task. `bun run build` and checks verify an artifact; they do not
+authorize publishing it.
+
 ## Storybook and evidence
 
 `bun run dev` builds once and serves the static catalog at
