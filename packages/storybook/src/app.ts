@@ -1,5 +1,6 @@
 import {resolveStory, stories, storyHash} from "./catalog"
 import {iconMarkup} from "./icons"
+import {LatestOperation, type LatestOperationCallbacks} from "./latest-operation"
 import type {EngineStory} from "./story"
 import {WebGpuStage} from "./webgpu-stage"
 
@@ -25,9 +26,32 @@ const shell = required<HTMLElement>("[data-shell]")
 
 let stage: WebGpuStage | null = null
 let currentStory: EngineStory | null = null
+const storyOperation = new LatestOperation()
 
-const showStageError = (error: unknown): void => {
-  status.textContent = "Story failed"
+const storyOperationCallbacks: LatestOperationCallbacks = {
+  start() {
+    status.textContent = "Loading story"
+    status.removeAttribute("data-state")
+  },
+  success() {
+    status.textContent = "Ready · renders on demand"
+    status.dataset.state = "ready"
+    errorPanel.hidden = true
+    errorPanel.textContent = ""
+  },
+  failure(error) {
+    status.textContent = "Story failed"
+    status.dataset.state = "error"
+    errorPanel.hidden = false
+    errorPanel.textContent = error instanceof Error ? error.message : String(error)
+  },
+}
+
+const runStoryOperation = (operation: () => Promise<void>): Promise<boolean> =>
+  storyOperation.run(operation, storyOperationCallbacks)
+
+const showInitializationError = (error: unknown): void => {
+  status.textContent = "WebGPU initialization failed"
   status.dataset.state = "error"
   errorPanel.hidden = false
   errorPanel.textContent = error instanceof Error ? error.message : String(error)
@@ -79,7 +103,8 @@ const showStory = (): void => {
   if (location.hash !== storyHash(story)) history.replaceState(null, "", storyHash(story))
   currentStory = story
   renderMetadata(story)
-  if (stage !== null) void stage.show(story).catch(showStageError)
+  const currentStage = stage
+  if (currentStage !== null) void runStoryOperation(() => currentStage.show(story))
 }
 
 const initialize = async (): Promise<void> => {
@@ -96,20 +121,19 @@ const initialize = async (): Promise<void> => {
   try {
     status.textContent = "Initializing WebGPU"
     stage = await WebGpuStage.create(canvas)
-    if (currentStory !== null) await stage.show(currentStory)
-    status.textContent = "Ready · renders on demand"
-    status.dataset.state = "ready"
+    const currentStage = stage
+    const story = currentStory
+    if (story === null) storyOperationCallbacks.success()
+    else await runStoryOperation(() => currentStage.show(story))
   } catch (error) {
-    status.textContent = "WebGPU initialization failed"
-    status.dataset.state = "error"
-    errorPanel.hidden = false
-    errorPanel.textContent = error instanceof Error ? error.message : String(error)
+    showInitializationError(error)
   }
 }
 
 window.addEventListener("hashchange", showStory)
 resetButton.addEventListener("click", () => {
-  if (stage !== null) void stage.reset().catch(showStageError)
+  const currentStage = stage
+  if (currentStage !== null) void runStoryOperation(() => currentStage.reset())
 })
 menuButton.addEventListener("click", () => {
   const open = shell.toggleAttribute("data-menu-open")
