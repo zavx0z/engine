@@ -96,12 +96,41 @@ describe("Engine Storybook static build source", () => {
       "name: Install Layout dependencies",
       "name: Install UI dependencies",
       "name: Install Engine dependencies",
+      "name: Check workspace",
+      "name: Verify clean manifest identities",
     ]
     const positions = bootstrap.map((marker) => workflow.indexOf(marker))
     expect(positions.every((position) => position >= 0)).toBeTrue()
     expect(positions).toEqual([...positions].sort((left, right) => left - right))
     expect(workflow.match(/run: bun link/g)?.length).toBe(6)
     expect(workflow.match(/bun install --frozen-lockfile/g)?.length).toBe(5)
-    expect(workflow).toContain("path: packages/storybook/dist")
+    expect(workflow).not.toContain(".deps/")
+    expect(workflow).toContain("bun-version-file: engine/.bun-version")
+    expect([...workflow.matchAll(/^\s+path: ([^\n]+)/gm)].map((match) => match[1])).toEqual([
+      "engine",
+      "layout",
+      "ui",
+      "highlighter",
+      "storybook",
+      "engine/packages/storybook/dist",
+    ])
+    expect([...workflow.matchAll(/working-directory: ([^\n]+)/g)].map((match) => match[1])).toEqual([
+      "engine/packages/core",
+      "layout/packages/core",
+      "ui/packages/elements",
+      "ui/packages/components",
+      "highlighter",
+      "highlighter",
+      "storybook",
+      "storybook",
+      "layout",
+      "ui",
+      "engine",
+      "engine",
+      "engine",
+    ])
+    expect(workflow).toContain("path: engine/packages/storybook/dist")
+    expect(workflow).toContain("manifest.source.dirty")
+    expect(workflow).toContain("manifest.dependencies.some((dependency) => dependency.dirty)")
   })
 })

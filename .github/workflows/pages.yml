@@ -16,87 +16,100 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Check out repository
+      - name: Check out Engine
         uses: actions/checkout@v6
+        with:
+          path: engine
 
       - name: Check out Layout dependency
         uses: actions/checkout@v6
         with:
           repository: zavx0z/layout
           ref: 30cf6b686c4117238693bd2c5aeb58c2c49a9dbc
-          path: .deps/layout
+          path: layout
 
       - name: Check out UI dependency
         uses: actions/checkout@v6
         with:
           repository: zavx0z/ui
           ref: 1ab29de686b1bb238d43e37a55d9ed428ccc799d
-          path: .deps/ui
+          path: ui
 
       - name: Check out Highlighter dependency
         uses: actions/checkout@v6
         with:
           repository: zavx0z/highlighter
           ref: a9f240b682a6ccec042ea04522220f153d3b53eb
-          path: .deps/highlighter
+          path: highlighter
 
       - name: Check out shared Storybook dependency
         uses: actions/checkout@v6
         with:
           repository: zavx0z/storybook
           ref: bbacaa721b9327dc771f348f017bd6e0a7cef3df
-          path: .deps/storybook
+          path: storybook
 
       - name: Set up Bun
         uses: oven-sh/setup-bun@v2
         with:
-          bun-version-file: .bun-version
+          bun-version-file: engine/.bun-version
 
       - name: Register Engine package
-        working-directory: packages/core
+        working-directory: engine/packages/core
         run: bun link
 
       - name: Register Layout package
-        working-directory: .deps/layout/packages/core
+        working-directory: layout/packages/core
         run: bun link
 
       - name: Register UI Elements package
-        working-directory: .deps/ui/packages/elements
+        working-directory: ui/packages/elements
         run: bun link
 
       - name: Register UI Components package
-        working-directory: .deps/ui/packages/components
+        working-directory: ui/packages/components
         run: bun link
 
       - name: Install and verify Highlighter dependency
-        working-directory: .deps/highlighter
+        working-directory: highlighter
         run: bun install --frozen-lockfile && bun run check
 
       - name: Register Highlighter package
-        working-directory: .deps/highlighter
+        working-directory: highlighter
         run: bun link
 
       - name: Install shared Storybook dependencies
-        working-directory: .deps/storybook
+        working-directory: storybook
         run: bun install --frozen-lockfile
 
       - name: Register shared Storybook package
-        working-directory: .deps/storybook
+        working-directory: storybook
         run: bun link
 
       - name: Install Layout dependencies
-        working-directory: .deps/layout
+        working-directory: layout
         run: bun install --frozen-lockfile
 
       - name: Install UI dependencies
-        working-directory: .deps/ui
+        working-directory: ui
         run: bun install --frozen-lockfile
 
       - name: Install Engine dependencies
+        working-directory: engine
         run: bun install --frozen-lockfile
 
       - name: Check workspace
+        working-directory: engine
         run: bun run check:ci
+
+      - name: Verify clean manifest identities
+        working-directory: engine
+        run: |
+          bun -e '
+            const manifest = await Bun.file("packages/storybook/dist/storybook-manifest.json").json()
+            const dirty = manifest.source.dirty || manifest.dependencies.some((dependency) => dependency.dirty)
+            if (dirty) throw new Error("Engine Pages manifest contains a dirty Git identity")
+          '
 
       - name: Configure Pages
         uses: actions/configure-pages@v5
@@ -104,7 +117,7 @@ jobs:
       - name: Upload Storybook artifact
         uses: actions/upload-pages-artifact@v4
         with:
-          path: packages/storybook/dist
+          path: engine/packages/storybook/dist
 
   deploy:
     environment:
