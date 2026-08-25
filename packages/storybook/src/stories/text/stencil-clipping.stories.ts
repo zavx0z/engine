@@ -12,7 +12,7 @@ import type {EngineStory} from "../../story"
 
 const panel = (x: number, color: number): Mesh => {
   const mesh = new Mesh(
-    new PlaneGeometry({width: 260, height: 150}),
+    new PlaneGeometry({width: 270, height: 200}),
     new MeshBasicMaterial({color}),
   )
   mesh.position.set(x, 0, 0)
@@ -40,12 +40,12 @@ resize(({width, height}) => {
     const font = await loadDocumentDefaultFont()
     const space = new Space()
     space.background = new Color(0x090c12)
-    space.add(panel(-140, 0x101a2a))
-    space.add(panel(140, 0x10251f))
+    space.add(panel(-142, 0x162a45))
+    space.add(panel(142, 0x173a2e))
 
     const divider = new Mesh(
-      new PlaneGeometry({width: 3, height: 170}),
-      new MeshBasicMaterial({color: 0x5d708c}),
+      new PlaneGeometry({width: 4, height: 220}),
+      new MeshBasicMaterial({color: 0x91a5c3}),
     )
     divider.position.z = 1
     space.add(divider)
@@ -56,16 +56,16 @@ resize(({width, height}) => {
       14,
       new TextMaterial({color: 0xb8c6da}),
     )
-    leftCaption.position.set(-250, 48, 3)
+    leftCaption.position.set(-250, 58, 3)
     space.add(leftCaption)
 
     const rightCaption = new Text(
-      "ONLY THE LABEL BELOW",
+      "ONLY CLEAN LABEL BELOW",
       font,
       14,
       new TextMaterial({color: 0xb8d8cd}),
     )
-    rightCaption.position.set(22, 48, 3)
+    rightCaption.position.set(25, 58, 3)
     space.add(rightCaption)
 
     const clipped = new Text(
@@ -74,7 +74,7 @@ resize(({width, height}) => {
       28,
       new TextMaterial({color: 0x79a7ff}),
     )
-    clipped.position.set(-250, -8, 3)
+    clipped.position.set(-250, -30, 3)
     space.add(clipped)
 
     const neighbor = new Text(
@@ -83,13 +83,13 @@ resize(({width, height}) => {
       28,
       new TextMaterial({color: 0x8af0cf}),
     )
-    neighbor.position.set(22, -8, 4)
+    neighbor.position.set(25, -30, 3)
     space.add(neighbor)
 
     return {
       space,
       camera: {
-        position: {x: 0, y: -150, z: 430},
+        position: {x: 0, y: 0, z: 480},
         target: {x: 0, y: 0, z: 0},
         near: 1,
         far: 1200,
