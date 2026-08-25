@@ -15,6 +15,8 @@ import type {EngineStory} from "../../story"
 const PANEL_WIDTH = 270
 const PANEL_HEIGHT = 200
 const PANEL_RADIUS = 24
+const PANEL_BORDER_WIDTH = 2
+const PANEL_CLIP_INSET = 4
 
 const panel = (x: number, fill: number): Readonly<{mesh: Mesh; clip: PresentationClipShape}> => {
   const mesh = new Mesh(
@@ -25,7 +27,7 @@ const panel = (x: number, fill: number): Readonly<{mesh: Mesh; clip: Presentatio
       radius: PANEL_RADIUS,
       fill,
       border: 0x5f7694,
-      borderWidth: 2,
+      borderWidth: PANEL_BORDER_WIDTH,
     }),
   )
   mesh.position.set(x, 0, 0)
@@ -33,8 +35,13 @@ const panel = (x: number, fill: number): Readonly<{mesh: Mesh; clip: Presentatio
     kind: "rounded-rect",
     coordinateSpace: mesh,
     center: [0, 0],
-    halfSize: [PANEL_WIDTH / 2, PANEL_HEIGHT / 2],
-    radii: [PANEL_RADIUS, PANEL_RADIUS, PANEL_RADIUS, PANEL_RADIUS],
+    halfSize: [PANEL_WIDTH / 2 - PANEL_CLIP_INSET, PANEL_HEIGHT / 2 - PANEL_CLIP_INSET],
+    radii: [
+      PANEL_RADIUS - PANEL_CLIP_INSET,
+      PANEL_RADIUS - PANEL_CLIP_INSET,
+      PANEL_RADIUS - PANEL_CLIP_INSET,
+      PANEL_RADIUS - PANEL_CLIP_INSET,
+    ],
   }
   return {mesh, clip}
 }
@@ -45,15 +52,23 @@ export const textStencilClippingStory: EngineStory = Object.freeze({
   title: "Stencil-обрезка текста",
   icon: "text",
   materialIcon: "TextFields",
-  description: "Две отдельные скруглённые панели задают public presentation clips. Пиксели длинной левой строки физически доходят до правой области, но rounded clip удаляет их до stencil и cover; на той же высоте остаётся только независимый CLEAN LABEL. Подписи вынесены отдельной строкой.",
+  description: "Две отдельные скруглённые панели задают public presentation clips. Контентный clip отступает на 4 world units: внутрь 2-unit рамки и ещё на AA-зазор. Пиксели длинной левой строки не заходят под border. На той же высоте остаётся только независимый CLEAN LABEL; подписи вынесены отдельной строкой.",
   sourceFile: "stories/text/stencil-clipping.stories.ts",
   tags: ["presentation clip", "rounded clip chain", "text stencil"],
-  source: `const leftClip: PresentationClipShape = {
+  source: `const PANEL_BORDER_WIDTH = 2
+const PANEL_CLIP_INSET = 4 // border + AA gap
+
+const leftClip: PresentationClipShape = {
   kind: "rounded-rect",
   coordinateSpace: leftPanel,
   center: [0, 0],
-  halfSize: [135, 100],
-  radii: [24, 24, 24, 24],
+  halfSize: [135 - PANEL_CLIP_INSET, 100 - PANEL_CLIP_INSET],
+  radii: [
+    24 - PANEL_CLIP_INSET,
+    24 - PANEL_CLIP_INSET,
+    24 - PANEL_CLIP_INSET,
+    24 - PANEL_CLIP_INSET,
+  ],
 }
 
 overflow.presentationClips = [leftClip]
