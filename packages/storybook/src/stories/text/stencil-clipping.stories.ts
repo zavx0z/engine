@@ -2,6 +2,7 @@ import {
   Color,
   Mesh,
   MeshBasicMaterial,
+  Object3D,
   PlaneGeometry,
   type PresentationClipShape,
   RoundedRectMaterial,
@@ -52,11 +53,15 @@ export const textStencilClippingStory: EngineStory = Object.freeze({
   title: "Stencil-обрезка текста",
   icon: "text",
   materialIcon: "TextFields",
-  description: "Две отдельные скруглённые панели задают public presentation clips. Контентный clip отступает на 4 world units: внутрь 2-unit рамки и ещё на AA-зазор. Пиксели длинной левой строки не заходят под border. На той же высоте остаётся только независимый CLEAN LABEL; подписи вынесены отдельной строкой.",
+  description: "Две отдельные скруглённые панели стоят на одной вертикальной board с обычной Z-up камерой и задают public presentation clips. Контентный clip отступает на 4 world units: внутрь 2-unit рамки и ещё на AA-зазор. Пиксели длинной левой строки не заходят под border. На той же высоте остаётся только независимый CLEAN LABEL; подписи вынесены отдельной строкой.",
   sourceFile: "stories/text/stencil-clipping.stories.ts",
   tags: ["presentation clip", "rounded clip chain", "text stencil"],
   source: `const PANEL_BORDER_WIDTH = 2
 const PANEL_CLIP_INSET = 4 // border + AA gap
+
+const board = new Object3D()
+board.rotation.x = Math.PI / 2
+space.add(board)
 
 const leftClip: PresentationClipShape = {
   kind: "rounded-rect",
@@ -77,18 +82,21 @@ cleanLabel.presentationClips = [rightClip]`,
     const font = await loadDocumentDefaultFont()
     const space = new Space()
     space.background = new Color(0x090c12)
+    const board = new Object3D()
+    board.rotation.x = Math.PI / 2
+    space.add(board)
 
     const left = panel(-142, 0x162a45)
     const right = panel(142, 0x173a2e)
-    space.add(left.mesh)
-    space.add(right.mesh)
+    board.add(left.mesh)
+    board.add(right.mesh)
 
     const divider = new Mesh(
       new PlaneGeometry({width: 4, height: 220}),
       new MeshBasicMaterial({color: 0x91a5c3}),
     )
     divider.position.z = 1
-    space.add(divider)
+    board.add(divider)
 
     const leftCaption = new Text(
       "LEFT · ROUNDED PIXEL CLIP",
@@ -98,7 +106,7 @@ cleanLabel.presentationClips = [rightClip]`,
     )
     leftCaption.position.set(-250, 58, 3)
     leftCaption.presentationClips = [left.clip]
-    space.add(leftCaption)
+    board.add(leftCaption)
 
     const rightCaption = new Text(
       "RIGHT · INDEPENDENT COVER",
@@ -108,7 +116,7 @@ cleanLabel.presentationClips = [rightClip]`,
     )
     rightCaption.position.set(25, 58, 3)
     rightCaption.presentationClips = [right.clip]
-    space.add(rightCaption)
+    board.add(rightCaption)
 
     const lineY = -30
     const overflow = new Text(
@@ -119,7 +127,7 @@ cleanLabel.presentationClips = [rightClip]`,
     )
     overflow.position.set(-250, lineY, 3)
     overflow.presentationClips = [left.clip]
-    space.add(overflow)
+    board.add(overflow)
 
     const cleanLabel = new Text(
       "CLEAN LABEL",
@@ -129,12 +137,12 @@ cleanLabel.presentationClips = [rightClip]`,
     )
     cleanLabel.position.set(25, lineY, 3)
     cleanLabel.presentationClips = [right.clip]
-    space.add(cleanLabel)
+    board.add(cleanLabel)
 
     return {
       space,
       camera: {
-        position: {x: 0, y: 0, z: 480},
+        position: {x: 0, y: -480, z: 0},
         target: {x: 0, y: 0, z: 0},
         near: 1,
         far: 1200,
