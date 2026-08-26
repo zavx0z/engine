@@ -47,23 +47,13 @@ bun run build
 required and a usable adapter is available. A green CPU/static build is not GPU
 or visual proof.
 
-The static `/engine/` artifact must include `.nojekyll`, fail-closed deep-link
-recovery, the Engine font and a schema-1 `storybook-manifest.json` with exact
-source/dependency revisions, routes, lazy chunks, sizes and SHA-256 hashes.
-
-GitHub Pages deployment is manual and owner-gated. Never dispatch
-`.github/workflows/pages.yml`, run `gh workflow run`, change repository Pages
-settings, or deploy an artifact unless the owner explicitly requests deployment
-in the current task. `bun run build` and checks verify an artifact; they do not
-authorize publishing it.
-
 ## Storybook and evidence
 
-`bun run dev` starts the shared no-HMR server at
-`http://127.0.0.1:4173/engine/`. It compiles the one Engine page on first
-request and keeps it until an owner-controlled restart. Inspect listener
-ownership before starting it; never adopt or stop a foreign process. Restart
-only the exact owned process after a stable source checkpoint.
+Use the global `$storybook` with exact package `@engine/storybook` for
+lifecycle, automatic origin, static build and browser evidence. This skill does
+not own a Storybook process, port, registry, target, lifecycle script or shared
+delivery rule. Engine package requirements retain only Engine-specific routes,
+font ownership and GPU expectations.
 
 Routes use pathname hierarchy. Overview routes end in `/`, exact leaves do
 not, and unknown suffixes must return 404. The readiness marker is
@@ -71,7 +61,7 @@ not, and unknown suffixes must return 404. The readiness marker is
 `#engine-story-canvas` and rejects a black result. The surrounding catalog is
 the shared five-region Workbench, but its preview remains Engine-owned.
 
-For a visual change, verify the exact story, WebGPU canvas, console, and a
+For a visual change, use `$storybook` to verify the exact story, WebGPU canvas, console, and a
 non-black rendered result with the browser tooling available to the task. Keep
 WebGPU Inspector external to source and build output. Performance claims need a
 representative workload and recorded CPU, allocation/upload, draw/dispatch,

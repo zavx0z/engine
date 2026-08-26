@@ -83,12 +83,12 @@ The sibling links are stable cross-repository targets. A sibling may still be in
 ```bash
 bun install
 bun run check
-bun run dev
 ```
 
-`bun run dev` starts the no-HMR catalog at `http://127.0.0.1:4173/engine/`.
-The browser page is compiled once on its first request and remains stable until
-the exact owned process is restarted.
+Use `$storybook ensure @engine/storybook` for the no-HMR runtime and
+`$storybook check @engine/storybook` for its package gates. The browser page is
+compiled once on its first request and remains stable until the exact owned
+process is restarted.
 
 Useful commands:
 
@@ -96,7 +96,6 @@ Useful commands:
 bun run typecheck  # core and Storybook TypeScript contracts
 bun run test       # CPU, shader, pipeline and catalog tests
 bun run test:ci    # deterministic CPU/source tests for runners without a GPU
-bun run build      # static GitHub Pages artifact
 bun run check      # all checks in acceptance order
 ```
 

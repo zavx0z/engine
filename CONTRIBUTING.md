@@ -17,13 +17,8 @@ bun install
 bun run check
 ```
 
-Run the live catalog with:
-
-```bash
-bun run dev
-```
-
-Open `http://127.0.0.1:4173/engine/`.
+Use `$storybook ensure @engine/storybook` so lifecycle and browser evidence
+remain package-named.
 
 ## Working boundaries
 
@@ -84,7 +79,7 @@ Stories render on demand. Do not introduce an unconditional animation loop for a
 ```bash
 bun run typecheck
 bun run test
-bun run build
+bun run --cwd packages/storybook build
 git diff --check
 ```
 

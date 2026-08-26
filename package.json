@@ -16,10 +16,8 @@
     "packages/*"
   ],
   "scripts": {
-    "build": "bun run --cwd packages/storybook build",
-    "check": "bun run typecheck && bun run test && bun run build",
-    "check:ci": "bun run typecheck && bun run test:ci && bun run build",
-    "dev": "bun run --cwd packages/storybook dev",
+    "check": "bun run typecheck && bun run test && bun run --cwd packages/storybook build",
+    "check:ci": "bun run typecheck && bun run test:ci && bun run --cwd packages/storybook build",
     "test": "bun test packages",
     "test:ci": "bun test packages --path-ignore-patterns='**/*.webgpu.test.ts'",
     "typecheck": "bun run --cwd packages/core typecheck && bun run --cwd packages/storybook typecheck"

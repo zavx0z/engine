@@ -45,16 +45,23 @@ describe("Engine Storybook no-HMR server", () => {
     }
   })
 
-  test("keeps the runnable lifecycle on the shared server and exact port", async () => {
+  test("keeps the runnable lifecycle on the shared package server and automatic port", async () => {
     const source = await Bun.file(new URL("../scripts/serve.ts", import.meta.url)).text()
     const manifest = await Bun.file(new URL("../package.json", import.meta.url)).json() as {
       scripts?: Record<string, string>
     }
 
     expect(source).toContain('from "@zavx0z/storybook/server"')
-    expect(source).toContain("ENGINE_STORYBOOK_PORT ?? 4173")
+    expect(source).toContain("startStorybookPackageServer({")
+    expect(source).not.toContain("port:")
+    expect(source).not.toMatch(/ENGINE_STORYBOOK_(?:HOST|PORT)/u)
     expect(source).not.toContain("Bun.serve")
-    expect(manifest.scripts?.dev).toBe("bun scripts/serve.ts")
-    expect(manifest.scripts?.preview).toBe("bun scripts/serve.ts")
+    expect(manifest.scripts).toEqual({
+      storybook: "bun scripts/serve.ts",
+      build: "bun scripts/build.ts",
+      test: "bun test src",
+      typecheck: "tsc --noEmit -p tsconfig.json",
+      check: "bun run typecheck && bun run test && bun run build",
+    })
   })
 })

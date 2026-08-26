@@ -13,11 +13,11 @@
   "license": "MIT",
   "type": "module",
   "scripts": {
+    "storybook": "bun scripts/serve.ts",
     "build": "bun scripts/build.ts",
-    "dev": "bun scripts/serve.ts",
-    "preview": "bun scripts/serve.ts",
     "test": "bun test src",
-    "typecheck": "tsc --noEmit -p tsconfig.json"
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "check": "bun run typecheck && bun run test && bun run build"
   },
   "dependencies": {
     "@engine/core": "workspace:*",
