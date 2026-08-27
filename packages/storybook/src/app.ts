@@ -16,6 +16,7 @@ import {
 import type {
   StorybookStoryArgs,
   StorybookStoryIndexItem,
+  StorybookStorySource,
 } from "@zavx0z/storybook/stories"
 import {
   StorybookBackdropSurface,
@@ -25,10 +26,13 @@ import {
   planStorybookShell,
   type StorybookNavigationItem,
   type StorybookResponsivePolicy,
-  type StorybookStoryPanelMode,
+  type StorybookStoryPanelCategory,
   type StorybookStoryPanelOptions,
 } from "@zavx0z/storybook/workbench"
-import {storybookPublicPath} from "@zavx0z/storybook/environment"
+import {
+  storybookPublicPath,
+  waitForStorybookFrameBoundary,
+} from "@zavx0z/storybook/environment"
 import {
   ENGINE_STORYBOOK_CATALOG,
   engineStorybookPresentationRoute,
@@ -70,7 +74,7 @@ async function startEngineStorybook(): Promise<void> {
     let storyRoute = initial.route
     let storyIndex = initial.index
     let story = initial.story
-    let panelMode: StorybookStoryPanelMode = "controls"
+    let panelCategory: StorybookStoryPanelCategory = "source"
     let catalogQuery = ""
     let collapsedGroups = new Set<string>()
     let selectionRevision = 0
@@ -108,7 +112,7 @@ async function startEngineStorybook(): Promise<void> {
     let storyPanel: StorybookStoryPanelSurface
 
     const panelOptions = (): StorybookStoryPanelOptions => ({
-      source: story.source,
+      source: engineStorySource(story),
       args: EMPTY_ARGS,
       controls: [],
       events: [
@@ -116,19 +120,19 @@ async function startEngineStorybook(): Promise<void> {
         {id: "frames", label: "Представленные кадры", value: String(stage.frames)},
         {id: "reset", label: "Сброс вида", value: `${resetCount} · двойной клик по сцене`},
       ],
-      mode: panelMode,
-      onModeChange(mode) {
-        panelMode = mode
+      category: panelCategory,
+      onCategoryChange(category) {
+        panelCategory = category
         storyPanel.setOptions(panelOptions())
         publish()
       },
       onControlChange() {},
-      async onCopy(source) {
+      async onCopy(kind, source) {
         try {
           await navigator.clipboard.writeText(source)
-          document.documentElement.dataset.engineStorybookCopy = "copied"
+          document.documentElement.dataset.engineStorybookCopy = `${kind}:copied`
         } catch {
-          document.documentElement.dataset.engineStorybookCopy = "error"
+          document.documentElement.dataset.engineStorybookCopy = `${kind}:error`
         }
       },
     })
@@ -190,6 +194,10 @@ async function startEngineStorybook(): Promise<void> {
       document.documentElement.dataset.engineStorybookStoryId = story.id
       document.documentElement.dataset.engineStorybookFrames = String(stage.frames)
       document.documentElement.dataset.engineStorybookCanvas = engineCanvas.hidden ? "hidden" : "visible"
+      const source = engineStorySource(story)
+      document.documentElement.dataset.engineStorybookHtml = source.html
+      document.documentElement.dataset.engineStorybookCss = source.css
+      document.documentElement.dataset.engineStorybookTypescript = source.typescript
     }
 
     async function applyRoute(node: StorybookRouteTreeNode<string>): Promise<void> {
@@ -218,6 +226,8 @@ async function startEngineStorybook(): Promise<void> {
         runtime.relayout()
         positionEngineCanvas()
         publish()
+        await waitForStorybookFrameBoundary()
+        if (revision !== selectionRevision || router.current !== node) return
         document.documentElement.dataset.engineStorybook = "ready"
       } catch (error) {
         if (revision === selectionRevision) throw error
@@ -260,11 +270,32 @@ async function startEngineStorybook(): Promise<void> {
     engineState = "Готово"
     storyPanel.setOptions(panelOptions())
     publish()
+    await waitForStorybookFrameBoundary()
+    if (router.current !== initialNode || selectionRevision !== 0) return
     document.documentElement.dataset.engineStorybook = "ready"
   } catch (error) {
     publishError(error)
     throw error
   }
+}
+
+function engineStorySource(story: Readonly<{id: string; source: string}>): StorybookStorySource {
+  return Object.freeze({
+    html: `<canvas id="engine-story-canvas" class="engine-story" data-story="${story.id}" aria-label="Живая сцена @engine/core"></canvas>`,
+    css: `.engine-story {
+  position: fixed;
+  width: 100%;
+  height: 100%;
+  display: block;
+  border: 0;
+  border-radius: 3px;
+  background: #05080e;
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 8%);
+  outline: none;
+  touch-action: none;
+}`,
+    typescript: story.source,
+  })
 }
 
 async function loadStableEngineStory(router: StorybookRouteTreeRouter<string>) {

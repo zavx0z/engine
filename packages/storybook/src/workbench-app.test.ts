@@ -20,6 +20,15 @@ describe("Engine Storybook shared Workbench application", () => {
     expect(source).toContain('workbenchCanvas.id = "engine-workbench-canvas"')
     expect(source).toContain('document.getElementById("engine-story-canvas")')
     expect(source).toContain("await stage.show(story)")
+    expect(source).toContain('let panelCategory: StorybookStoryPanelCategory = "source"')
+    expect(source).toContain("source: engineStorySource(story)")
+    expect(source).toContain('html: `<canvas id="engine-story-canvas"')
+    expect(source).toContain("typescript: story.source")
+    expect(source).toContain("onCategoryChange(category)")
+    expect(source).toContain("onCopy(kind, source)")
+    expect(source).toContain("dataset.engineStorybookHtml = source.html")
+    expect(source).toContain("dataset.engineStorybookCss = source.css")
+    expect(source).toContain("dataset.engineStorybookTypescript = source.typescript")
     expect(source).toContain('dataset.engineStorybook = "ready"')
     expect(source).not.toContain("location.hash")
     expect(source).not.toContain("hashchange")
@@ -42,7 +51,7 @@ describe("Engine Storybook shared Workbench application", () => {
     expect(style).toContain("touch-action: none")
   })
 
-  test("publishes readiness only after a real synchronous Engine render", async () => {
+  test("publishes readiness only after a real Engine render and shared frame boundary", async () => {
     const app = await Bun.file(new URL("./app.ts", import.meta.url)).text()
     const stage = await Bun.file(new URL("./webgpu-stage.ts", import.meta.url)).text()
 
@@ -50,6 +59,10 @@ describe("Engine Storybook shared Workbench application", () => {
     expect(stage).toContain("renderStoryScene(this.#renderer, this.#scene, this.#viewPoint)")
     expect(stage).toContain("this.#presentedFrames += 1")
     expect(app.indexOf("await stage.show(story)")).toBeLessThan(
+      app.lastIndexOf('dataset.engineStorybook = "ready"'),
+    )
+    expect(app).toContain("await waitForStorybookFrameBoundary()")
+    expect(app.indexOf("await waitForStorybookFrameBoundary()")).toBeLessThan(
       app.lastIndexOf('dataset.engineStorybook = "ready"'),
     )
   })
