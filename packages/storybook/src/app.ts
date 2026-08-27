@@ -1,5 +1,5 @@
 /**
-Repository-owned Engine Storybook inside the shared five-region Workbench.
+Repository-owned Engine Storybook inside the shared Workbench with its status bar.
 
 Workbench chrome renders through one `UiRuntime`. The preview remains a real
 Engine-owned canvas with its own production Renderer and perspective camera.
@@ -22,6 +22,7 @@ import {
   StorybookBackdropSurface,
   StorybookDockSurface,
   StorybookNavigationSurface,
+  StorybookStatusBarSurface,
   StorybookStoryPanelSurface,
   planStorybookShell,
   type StorybookNavigationItem,
@@ -109,6 +110,7 @@ async function startEngineStorybook(): Promise<void> {
     const sections = new StorybookNavigationSurface<string>(sectionOptions())
     const dock = new StorybookDockSurface<string>(dockOptions())
     const preview = new EnginePreviewSurface(storyIndex, story)
+    const statusBar = new StorybookStatusBarSurface()
     let storyPanel: StorybookStoryPanelSurface
 
     const panelOptions = (): StorybookStoryPanelOptions => ({
@@ -144,6 +146,7 @@ async function startEngineStorybook(): Promise<void> {
     runtime.addSurface(preview, ({w, h}) => frames(w, h).preview)
     runtime.addSurface(dock, ({w, h}) => frames(w, h).dock)
     runtime.addSurface(storyPanel, ({w, h}) => frames(w, h).info)
+    runtime.addSurface(statusBar, ({w, h}) => frames(w, h).status)
 
     function catalogOptions() {
       return {
@@ -187,7 +190,7 @@ async function startEngineStorybook(): Promise<void> {
     }
 
     function publish(): void {
-      for (const surface of [backdrop, catalog, sections, dock, preview, storyPanel]) surface.flushPendingRender()
+      for (const surface of [backdrop, catalog, sections, dock, preview, storyPanel, statusBar]) surface.flushPendingRender()
       document.documentElement.dataset.engineStorybookRoute = router.current.path
       document.documentElement.dataset.engineStorybookRouteKind = router.current.kind
       document.documentElement.dataset.engineStorybookStory = storyRoute

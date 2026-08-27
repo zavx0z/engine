@@ -1,7 +1,7 @@
 import {describe, expect, test} from "bun:test"
 
 describe("Engine Storybook shared Workbench application", () => {
-  test("uses all five shared regions around one owner-rendered Engine canvas", async () => {
+  test("uses all shared regions and the status bar around one owner-rendered Engine canvas", async () => {
     const source = await Bun.file(new URL("./app.ts", import.meta.url)).text()
 
     expect(source).toContain('from "@zavx0z/storybook/route-tree"')
@@ -12,11 +12,14 @@ describe("Engine Storybook shared Workbench application", () => {
       "StorybookNavigationSurface",
       "EnginePreviewSurface",
       "StorybookDockSurface",
+      "StorybookStatusBarSurface",
       "StorybookStoryPanelSurface",
     ]) expect(source).toContain(region)
-    for (const frame of [".catalog", ".section", ".preview", ".dock", ".info"]) {
+    for (const frame of [".catalog", ".section", ".preview", ".dock", ".info", ".status"]) {
       expect(source).toContain(`frames(w, h)${frame}`)
     }
+    expect(source).toContain("new StorybookStatusBarSurface()")
+    expect(source).toContain("[backdrop, catalog, sections, dock, preview, storyPanel, statusBar]")
     expect(source).toContain('workbenchCanvas.id = "engine-workbench-canvas"')
     expect(source).toContain('document.getElementById("engine-story-canvas")')
     expect(source).toContain("await stage.show(story)")
