@@ -89,7 +89,7 @@ Before handing off a visual change, also inspect the live story in a WebGPU brow
 
 ## Generated output
 
-Do not commit `dist/`, dependency directories, logs, or local environment files. GitHub Actions checks out Engine and its exact Layout, UI, Highlighter, and shared Storybook revisions into sibling directories so dependency setup cannot dirty the Engine identity. It registers their direct package owners, then builds the Pages artifact from every locked install with `bun install --frozen-lockfile`. The job rejects a static manifest when the source or any dependency reports `dirty: true`.
+Do not commit `dist/`, dependency directories, logs, or local environment files. GitHub Actions checks out Engine and its exact Renderer, UI, Highlighter, and shared Storybook revisions into sibling directories so dependency setup cannot dirty the Engine identity. It registers their direct package owners, then builds the Pages artifact from every locked install with `bun install --frozen-lockfile`. The job rejects a static manifest when the source or any dependency reports `dirty: true`.
 
 The workflow deploys only after checks pass. Enabling Pages, changing repository settings, publishing packages, or updating sibling consumers are separate owner-controlled actions.
 

@@ -9,7 +9,7 @@ Engine is the lowest rendering boundary in the interface stack. It knows how to 
 ```text
 MetaFor product integration
   ├─ Node authoring and layout ────────────────┐
-  ├─ UI controls ─> Layout UI runtime ─────────┼─> @engine/core ─> WebGPU
+  ├─ HTML DOM ─> document renderer ────────────┼─> @engine/core ─> WebGPU
   └─ direct spatial projections ───────────────┘
 ```
 
@@ -20,7 +20,6 @@ Cross-repository owners:
 | Owner | Repository | Pages |
 | --- | --- | --- |
 | Engine | [zavx0z/engine](https://github.com/zavx0z/engine) | [Engine Storybook](https://zavx0z.github.io/engine/) |
-| Layout | [zavx0z/layout](https://github.com/zavx0z/layout) | [Layout Storybook](https://zavx0z.github.io/layout/) |
 | UI | [zavx0z/ui](https://github.com/zavx0z/ui) | [reserved](https://zavx0z.github.io/ui/) |
 | Node | [zavx0z/node](https://github.com/zavx0z/node) | [reserved](https://zavx0z.github.io/node/) |
 | Product | [zavx0z/metafor](https://github.com/zavx0z/metafor) | Product-owned surfaces |
@@ -49,7 +48,7 @@ The Storybook is a static consumer of the public `@engine/core` entrypoint. It m
 Core-owned development descriptors live in `packages/core/storybook/**`, next
 to their semantic owner but outside `@engine/core` exports and production
 TypeScript project. The private repository Storybook composes those descriptors
-through `@zavx0z/storybook/stories`; it does not copy scene semantics into the
+through `@zavx0z/storybook/catalog`; it does not copy scene semantics into the
 application package.
 
 Its responsibilities are:
@@ -60,11 +59,13 @@ Its responsibilities are:
 - provide a public documentation surface;
 - remain deployable as plain files under `/engine/`.
 
-The app uses the shared five-region Workbench from exact
-`@zavx0z/storybook/*` subpaths. Layout and UI are direct dependencies only of
-this private development app. The preview is an Engine-owned canvas layered
-inside the shared preview frame, so its perspective camera, orbit/pan input and
-production renderer remain intact without adding UI dependencies to Core.
+The app uses the shared semantic Workbench from exact
+`@zavx0z/storybook/*` natural subpaths and renders it through the document pipeline.
+It has no Layout, Elements or UI Component dependency. Exact detail previews
+remain an Engine-owned canvas layered over the resolved semantic preview-host
+box, so perspective camera, orbit/pan input and production renderer remain
+intact without adding reverse dependencies to Core. Overview routes render
+their own DOM presentation and never select a hidden first detail.
 
 The Storybook is not an alternate renderer and does not own Engine features.
 
@@ -150,9 +151,10 @@ to `@zavx0z/storybook/build`. The artifact is emitted with public base
 Story navigation uses pathname routes. Overview routes end in `/`, exact detail
 routes do not, and unknown suffixes fail closed instead of selecting a fallback
 story. The Pages fallback recovers only a route registered in the catalog.
-Pages remains manual and may run only after shared dependencies are delivered
-at immutable revisions and its cold bootstrap pins are updated; a local link
-graph or successful local build is not deployment evidence.
+There is no active Pages workflow during the document-pipeline cutover. A new
+manual workflow may be introduced only after shared dependencies are delivered
+at immutable revisions; a local link graph or successful local build is not
+deployment evidence.
 
 ## Performance change gate
 

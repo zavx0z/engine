@@ -1,8 +1,5 @@
 import {describe, expect, test} from "bun:test"
-import {
-  ENGINE_STORYBOOK_CATALOG,
-  engineStorybookPresentationRoute,
-} from "./catalog"
+import {ENGINE_STORYBOOK_CATALOG} from "./catalog"
 import {storyIcons} from "../../core/storybook/icons"
 
 const EXPECTED_ROUTES = [
@@ -84,22 +81,10 @@ describe("engine story catalog", () => {
     expect(new Set(loaded).size).toBe(loaded.length)
   })
 
-  test("selects the first detail only for registered overview routes", () => {
-    expect(engineStorybookPresentationRoute("")).toBe("space/coordinate-system/z-up")
-    expect(engineStorybookPresentationRoute("holographic-material"))
-      .toBe("holographic-material/geometry/torus")
-    expect(engineStorybookPresentationRoute("thin-film-material/geometry"))
-      .toBe("thin-film-material/geometry/sphere")
-    expect(engineStorybookPresentationRoute("text/presentation-clip/stencil"))
-      .toBe("text/presentation-clip/stencil")
-    expect(() => engineStorybookPresentationRoute("holographic-material/missing"))
-      .toThrow("Unknown Engine story route")
-  })
-
   test("fails closed for unknown routes", async () => {
     expect(ENGINE_STORYBOOK_CATALOG.find("space/coordinate-system/missing")).toBeUndefined()
     await expect(ENGINE_STORYBOOK_CATALOG.load("space/coordinate-system/missing"))
-      .rejects.toThrow("Unknown storybook story route")
+      .rejects.toThrow("Unknown Storybook DOM route")
   })
 
   test("preserves unique ids, owner paths and icon associations", async () => {

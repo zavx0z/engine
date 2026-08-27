@@ -1,4 +1,4 @@
-import {defineStorybookStoryCatalog} from "@zavx0z/storybook/stories"
+import {defineStorybookDomCatalog} from "@zavx0z/storybook/catalog"
 import {
   ENGINE_STORYBOOK_GROUPS,
   ENGINE_STORYBOOK_REPRESENTATIVE,
@@ -47,22 +47,8 @@ const normalizeEngineStory = (route: string, loaded: unknown): EngineStory => {
 }
 
 /** Typed pathname hierarchy with one lazy module per Engine story. */
-export const ENGINE_STORYBOOK_CATALOG = defineStorybookStoryCatalog<unknown, EngineStory>({
+export const ENGINE_STORYBOOK_CATALOG = defineStorybookDomCatalog<unknown, EngineStory>({
   groups: ENGINE_STORYBOOK_GROUPS,
   representative: ENGINE_STORYBOOK_REPRESENTATIVE,
   normalizeModule: normalizeEngineStory,
 })
-
-/**
- * Selects the first registered detail below an overview for presentation.
- * Exact leaves stay exact and unknown paths fail closed.
- */
-export function engineStorybookPresentationRoute(path: string): string {
-  const node = ENGINE_STORYBOOK_CATALOG.routeTree.find(path)
-  if (node === undefined) throw new Error(`Unknown Engine story route: ${path}`)
-  if (node.kind === "leaf") return node.path
-  const prefix = node.path === "" ? "" : `${node.path}/`
-  const descendant = ENGINE_STORYBOOK_CATALOG.index.find(({route}) => route.startsWith(prefix))
-  if (descendant === undefined) throw new Error(`Engine story overview has no detail route: ${path}`)
-  return descendant.route
-}

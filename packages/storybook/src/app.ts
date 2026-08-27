@@ -1,314 +1,355 @@
-/**
-Repository-owned Engine Storybook inside the shared Workbench with its status bar.
+/** DOM Workbench around one independent Engine-owned WebGPU preview canvas. */
 
-Workbench chrome renders through one `UiRuntime`. The preview remains a real
-Engine-owned canvas with its own production Renderer and perspective camera.
-Both canvases use one dependency identity and one pathname router.
-
-@packageDocumentation
-*/
-
-import {UiRuntime} from "@layout/core/runtime"
+import {loadDocumentDefaultFont} from "@engine/core/default-font"
 import {
-  StorybookRouteTreeRouter,
-  type StorybookRouteTreeNode,
-} from "@zavx0z/storybook/route-tree"
-import type {
-  StorybookStoryArgs,
-  StorybookStoryIndexItem,
-  StorybookStorySource,
-} from "@zavx0z/storybook/stories"
+  CustomEvent as DomCustomEvent,
+  createDocument,
+  type Document,
+  type HTMLElement,
+  type Text,
+} from "@zavx0z/dom"
+import {createDocumentCanvasRuntime} from "@zavx0z/renderer-browser"
+import type {StorybookDomCatalogIndexItem} from "@zavx0z/storybook/catalog"
+import type {StorybookDomStorySource} from "@zavx0z/storybook/stories"
 import {
-  StorybookBackdropSurface,
-  StorybookDockSurface,
-  StorybookNavigationSurface,
-  StorybookStatusBarSurface,
-  StorybookStoryPanelSurface,
-  planStorybookShell,
-  type StorybookNavigationItem,
-  type StorybookResponsivePolicy,
-  type StorybookStoryPanelCategory,
-  type StorybookStoryPanelOptions,
+  STORYBOOK_DOM_WORKBENCH_EVENTS,
+  createStorybookDomWorkbench,
+  storybookDomWorkbenchCss,
+  type StorybookDomNavigationItem,
+  type StorybookDomScenarioItem,
 } from "@zavx0z/storybook/workbench"
-import {
-  storybookPublicPath,
-  waitForStorybookFrameBoundary,
-} from "@zavx0z/storybook/environment"
-import {
-  ENGINE_STORYBOOK_CATALOG,
-  engineStorybookPresentationRoute,
-} from "./catalog.ts"
-import {
-  ENGINE_PREVIEW_CONTENT_INSET,
-  ENGINE_PREVIEW_CONTENT_TOP,
-  EnginePreviewSurface,
-} from "./engine-preview-surface.ts"
+import {storybookPublicPath, waitForStorybookFrameBoundary} from "@zavx0z/storybook/environment"
+import {StorybookRouteTreeRouter, type StorybookRouteTreeNode} from "@zavx0z/storybook/route-tree"
+import type {EngineStory} from "../../core/storybook/story.ts"
+import {ENGINE_STORYBOOK_CATALOG} from "./catalog.ts"
 import {WebGpuStage} from "./webgpu-stage.ts"
 
-const ENGINE_STORYBOOK_MOUNT = storybookPublicPath("engine", "/")
-const ENGINE_STORYBOOK_RESPONSIVE: StorybookResponsivePolicy = Object.freeze({
-  compactBelow: null,
-  compactPanels: Object.freeze([]),
-})
-const EMPTY_ARGS = Object.freeze({}) satisfies StorybookStoryArgs
+const MOUNT = storybookPublicPath("engine", "/")
+const PREVIEW_INSET = 2
 
-async function startEngineStorybook(): Promise<void> {
+const engineWorkbenchCss = String.raw`
+.engine-storybook-presentation { box-sizing: border-box; display: flex; flex-direction: column; width: 100%; height: 100%; min-height: 220px; gap: 10px; padding: 18px; border: 1px solid #30343c; border-radius: 4px; background: #05080e; color: #e0e0e0; }
+.engine-storybook-presentation__title { display: block; color: #7edcec; font-size: 16px; }
+.engine-storybook-presentation__description, .engine-storybook-presentation__item { display: block; color: #b0b0b0; font-size: 12px; }
+.engine-storybook-presentation__items { display: flex; flex-direction: column; gap: 6px; }
+`
+
+type PreviewPresentation = Readonly<{
+  element: HTMLElement
+  title: Text
+  description: Text
+  items: HTMLElement
+}>
+
+async function start(): Promise<void> {
   const engineCanvas = requireEngineCanvas()
+  const shellCanvas = document.createElement("canvas")
+  shellCanvas.id = "engine-workbench-canvas"
+  shellCanvas.setAttribute("aria-label", "Рабочее окно Engine Storybook")
   engineCanvas.setAttribute("aria-label", "Живая сцена @engine/core")
-  const workbenchCanvas = document.createElement("canvas")
-  workbenchCanvas.id = "engine-workbench-canvas"
-  workbenchCanvas.setAttribute("aria-label", "Рабочее окно Engine Storybook")
-  engineCanvas.before(workbenchCanvas)
+  engineCanvas.before(shellCanvas)
   document.documentElement.dataset.engineStorybook = "starting"
 
   try {
-    const runtime = await UiRuntime.create(workbenchCanvas, {
-      virtualDisplay: {initial: "near", surfaceDisplay: true, grid: false},
+    const semanticDocument = createDocument()
+    const presentation = createPresentation(semanticDocument)
+    const workbench = createStorybookDomWorkbench({
+      document: semanticDocument,
+      parent: semanticDocument,
+      initial: {
+        title: "Engine Storybook",
+        "catalog.label": "Каталог Engine",
+        "catalog.items": catalogItems(),
+        "catalog.active": null,
+        "secondary.label": "Разделы",
+        "secondary.items": Object.freeze([]),
+        "secondary.active": null,
+        "preview.label": "Engine · Обзор",
+        "preview.node": presentation.element,
+        "scenarios.label": "Варианты",
+        "scenarios.items": Object.freeze([]),
+        "scenarios.active": null,
+        "inspector.label": "Исходный код",
+        "inspector.source": overviewSource("Engine · Обзор", "Корневой каталог Engine"),
+        status: {lead: "Создано для ", owner: "MetaFor", detail: " · Engine DOM Workbench"},
+      },
     })
-    runtime.handleResize()
-
-    const router = new StorybookRouteTreeRouter(ENGINE_STORYBOOK_CATALOG.routeTree, {
-      basePath: ENGINE_STORYBOOK_MOUNT,
+    const font = await loadDocumentDefaultFont()
+    const runtime = await createDocumentCanvasRuntime({
+      canvas: shellCanvas,
+      document: semanticDocument,
+      root: workbench.element,
+      styleSheets: [storybookDomWorkbenchCss, engineWorkbenchCss],
+      font,
+      tooltipDelayMs: 500,
     })
-    const initial = await loadStableEngineStory(router)
-    const initialNode = initial.node
-    let storyRoute = initial.route
-    let storyIndex = initial.index
-    let story = initial.story
-    let panelCategory: StorybookStoryPanelCategory = "source"
-    let catalogQuery = ""
-    let collapsedGroups = new Set<string>()
-    let selectionRevision = 0
-    let resetCount = 0
-    let engineState = "Загрузка"
-
-    const frames = (width: number, height: number) => planStorybookShell(width, height, {
-      responsive: ENGINE_STORYBOOK_RESPONSIVE,
-    })
-    const positionEngineCanvas = (): void => {
-      const shell = frames(workbenchCanvas.clientWidth, workbenchCanvas.clientHeight)
-      const preview = shell.preview
-      const x = preview.x + ENGINE_PREVIEW_CONTENT_INSET
-      const y = preview.y + ENGINE_PREVIEW_CONTENT_TOP
-      const width = Math.max(1, preview.w - ENGINE_PREVIEW_CONTENT_INSET * 2)
-      const height = Math.max(1, preview.h - ENGINE_PREVIEW_CONTENT_TOP - ENGINE_PREVIEW_CONTENT_INSET)
-      engineCanvas.style.left = `${x}px`
-      engineCanvas.style.top = `${y}px`
-      engineCanvas.style.width = `${width}px`
-      engineCanvas.style.height = `${height}px`
-      engineCanvas.style.visibility = "visible"
-      engineCanvas.hidden = preview.visible === false || preview.w <= 0 || preview.h <= 0
-    }
-    positionEngineCanvas()
-
     const stage = await WebGpuStage.create(engineCanvas)
+    const router = new StorybookRouteTreeRouter(ENGINE_STORYBOOK_CATALOG.routeTree, {basePath: MOUNT})
+    let routeRevision = 0
+    let story: EngineStory | null = null
+    let index: StorybookDomCatalogIndexItem | null = null
+    let resets = 0
+    let disposed = false
+
+    const positionPreview = (): void => {
+      const box = runtime.currentFrame.boxes.find(({node}) => node === workbench.elements.previewHost)
+      if (box === undefined || box.width <= 0 || box.height <= 0 || story === null) {
+        engineCanvas.hidden = true
+        engineCanvas.style.visibility = "hidden"
+        return
+      }
+      const rect = shellCanvas.getBoundingClientRect()
+      const scaleX = rect.width / runtime.viewport.width
+      const scaleY = rect.height / runtime.viewport.height
+      const {scaleX: transformX, scaleY: transformY, translateX, translateY} = box.transform
+      const x = transformX * box.x + translateX
+      const y = transformY * box.y + translateY
+      const width = Math.abs(transformX) * box.width
+      const height = Math.abs(transformY) * box.height
+      engineCanvas.style.left = `${rect.left + (x + PREVIEW_INSET) * scaleX}px`
+      engineCanvas.style.top = `${rect.top + (y + PREVIEW_INSET) * scaleY}px`
+      engineCanvas.style.width = `${Math.max(1, (width - PREVIEW_INSET * 2) * scaleX)}px`
+      engineCanvas.style.height = `${Math.max(1, (height - PREVIEW_INSET * 2) * scaleY)}px`
+      engineCanvas.hidden = false
+      engineCanvas.style.visibility = "visible"
+    }
+    const unsubscribeFrame = runtime.subscribe(positionPreview)
+
     const navigate = (route: string): void => {
-      if (!router.go(route)) publishError(new Error(`Неизвестный маршрут Engine Storybook: ${route}`))
+      if (!router.go(route)) throw new Error(`Неизвестный маршрут Engine Storybook: ${route}`)
     }
-    const backdrop = new StorybookBackdropSurface()
-    const catalog = new StorybookNavigationSurface<string>(catalogOptions())
-    const sections = new StorybookNavigationSurface<string>(sectionOptions())
-    const dock = new StorybookDockSurface<string>(dockOptions())
-    const preview = new EnginePreviewSurface(storyIndex, story)
-    const statusBar = new StorybookStatusBarSurface()
-    let storyPanel: StorybookStoryPanelSurface
+    const onNavigate = (event: unknown): void => navigate(
+      (event as DomCustomEvent<{route: string}>).detail.route,
+    )
+    const onScenario = (event: unknown): void => navigate(
+      (event as DomCustomEvent<{id: string}>).detail.id,
+    )
+    workbench.element.addEventListener(STORYBOOK_DOM_WORKBENCH_EVENTS.navigate, onNavigate)
+    workbench.element.addEventListener(STORYBOOK_DOM_WORKBENCH_EVENTS.scenario, onScenario)
 
-    const panelOptions = (): StorybookStoryPanelOptions => ({
-      source: engineStorySource(story),
-      args: EMPTY_ARGS,
-      controls: [],
-      events: [
-        {id: "state", label: "Состояние", value: engineState},
-        {id: "frames", label: "Представленные кадры", value: String(stage.frames)},
-        {id: "reset", label: "Сброс вида", value: `${resetCount} · двойной клик по сцене`},
-      ],
-      category: panelCategory,
-      onCategoryChange(category) {
-        panelCategory = category
-        storyPanel.setOptions(panelOptions())
-        publish()
-      },
-      onControlChange() {},
-      async onCopy(kind, source) {
-        try {
-          await navigator.clipboard.writeText(source)
-          document.documentElement.dataset.engineStorybookCopy = `${kind}:copied`
-        } catch {
-          document.documentElement.dataset.engineStorybookCopy = `${kind}:error`
-        }
-      },
-    })
-    storyPanel = new StorybookStoryPanelSurface(panelOptions())
-
-    runtime.addSurface(backdrop, ({w, h}) => ({x: 0, y: 0, w, h}))
-    runtime.addSurface(catalog, ({w, h}) => frames(w, h).catalog)
-    runtime.addSurface(sections, ({w, h}) => frames(w, h).section)
-    runtime.addSurface(preview, ({w, h}) => frames(w, h).preview)
-    runtime.addSurface(dock, ({w, h}) => frames(w, h).dock)
-    runtime.addSurface(storyPanel, ({w, h}) => frames(w, h).info)
-    runtime.addSurface(statusBar, ({w, h}) => frames(w, h).status)
-
-    function catalogOptions() {
-      return {
-        title: "Каталог Engine",
-        items: catalogItems(collapsedGroups),
-        route: storyIndex.componentId,
-        onNavigate: navigate,
-        query: catalogQuery,
-        searchPlaceholder: "API, материал, геометрия…",
-        onQueryChange(query: string) {
-          catalogQuery = query
-          catalog.setOptions(catalogOptions())
-          publish()
-        },
-        onGroupToggle(groupId: string, collapsed: boolean) {
-          collapsedGroups = new Set(collapsedGroups)
-          if (collapsed) collapsedGroups.add(groupId)
-          else collapsedGroups.delete(groupId)
-          catalog.setOptions(catalogOptions())
-          publish()
-        },
-      }
-    }
-
-    function sectionOptions() {
-      return {
-        title: storyIndex.componentLabel,
-        items: sectionItems(storyIndex),
-        route: `${storyIndex.componentId}/${storyIndex.sectionId}`,
-        onNavigate: navigate,
-      }
-    }
-
-    function dockOptions() {
-      return {
-        title: "Варианты",
-        items: variantItems(storyIndex),
-        route: router.current.kind === "leaf" ? router.current.path : "",
-        onNavigate: navigate,
-      }
-    }
-
-    function publish(): void {
-      for (const surface of [backdrop, catalog, sections, dock, preview, storyPanel, statusBar]) surface.flushPendingRender()
-      document.documentElement.dataset.engineStorybookRoute = router.current.path
-      document.documentElement.dataset.engineStorybookRouteKind = router.current.kind
-      document.documentElement.dataset.engineStorybookStory = storyRoute
-      document.documentElement.dataset.engineStorybookStoryId = story.id
+    const publish = (
+      node: StorybookRouteTreeNode<string>,
+      source: StorybookDomStorySource,
+      state: string,
+    ): void => {
+      document.documentElement.dataset.engineStorybookRoute = node.path
+      document.documentElement.dataset.engineStorybookRouteKind = node.kind
+      document.documentElement.dataset.engineStorybookStory = index?.route ?? "overview"
+      document.documentElement.dataset.engineStorybookStoryId = story?.id ?? "overview"
       document.documentElement.dataset.engineStorybookFrames = String(stage.frames)
-      document.documentElement.dataset.engineStorybookCanvas = engineCanvas.hidden ? "hidden" : "visible"
-      const source = engineStorySource(story)
+      document.documentElement.dataset.engineStorybookCanvas = story === null ? "hidden" : "visible"
       document.documentElement.dataset.engineStorybookHtml = source.html
       document.documentElement.dataset.engineStorybookCss = source.css
       document.documentElement.dataset.engineStorybookTypescript = source.typescript
+      workbench.update("status", {
+        lead: "Создано для ",
+        owner: "MetaFor",
+        detail: ` · Engine · ${state} · кадров ${stage.frames} · сбросов ${resets}`,
+      })
+      runtime.render()
+      positionPreview()
     }
 
-    async function applyRoute(node: StorybookRouteTreeNode<string>): Promise<void> {
-      const revision = ++selectionRevision
-      stage.invalidateSelection()
+    const applyRoute = async (node: StorybookRouteTreeNode<string>): Promise<void> => {
+      const revision = ++routeRevision
       document.documentElement.dataset.engineStorybook = "starting"
-      engineState = "Загрузка"
-      storyPanel.setOptions(panelOptions())
-      publish()
-      try {
-        const nextRoute = engineStorybookPresentationRoute(node.path)
-        const nextIndex = requireStory(nextRoute)
-        const nextStory = await ENGINE_STORYBOOK_CATALOG.load(nextRoute)
-        if (revision !== selectionRevision || router.current !== node) return
-        storyRoute = nextRoute
-        storyIndex = nextIndex
+      stage.invalidateSelection()
+      if (node.kind === "overview") {
+        story = null
+        index = contextFor(node.path)
+        const source = applyOverview(workbench, presentation, node)
+        publish(node, source, "Обзор")
+      } else {
+        const nextIndex = requireStory(node.path)
+        const nextStory = await ENGINE_STORYBOOK_CATALOG.load(node.path)
+        if (revision !== routeRevision || router.current !== node) return
+        index = nextIndex
         story = nextStory
-        catalog.setOptions(catalogOptions())
-        sections.setOptions(sectionOptions())
-        dock.setOptions(dockOptions())
-        preview.setStory(storyIndex, story)
-        await stage.show(story)
-        if (revision !== selectionRevision || router.current !== node) return
-        engineState = "Готово"
-        storyPanel.setOptions(panelOptions())
-        runtime.relayout()
-        positionEngineCanvas()
-        publish()
-        await waitForStorybookFrameBoundary()
-        if (revision !== selectionRevision || router.current !== node) return
-        document.documentElement.dataset.engineStorybook = "ready"
-      } catch (error) {
-        if (revision === selectionRevision) throw error
+        const source = applyLeaf(workbench, presentation, nextIndex, nextStory)
+        if (!await stage.show(nextStory) || revision !== routeRevision || router.current !== node) return
+        publish(node, source, "Готово")
       }
+      await waitForStorybookFrameBoundary()
+      if (revision !== routeRevision || router.current !== node) return
+      document.documentElement.dataset.engineStorybook = "ready"
     }
 
-    const resetView = async (): Promise<void> => {
-      if (engineState !== "Готово") return
-      const revision = selectionRevision
-      engineState = "Загрузка"
-      storyPanel.setOptions(panelOptions())
-      publish()
-      const committed = await stage.reset()
-      if (!committed || revision !== selectionRevision) return
-      resetCount += 1
-      engineState = "Готово"
-      storyPanel.setOptions(panelOptions())
-      publish()
+    const onReset = (): void => {
+      const revision = routeRevision
+      void stage.reset().then((committed) => {
+        if (!committed || revision !== routeRevision || story === null) return
+        resets += 1
+        publish(router.current, engineStorySource(story), "Готово")
+      }).catch(publishError)
     }
-    engineCanvas.addEventListener("dblclick", () => {
-      void resetView().catch(publishError)
-    })
-    router.subscribe((node) => {
-      void applyRoute(node).catch(publishError)
-    })
-    new ResizeObserver(() => {
-      runtime.handleResize()
-      positionEngineCanvas()
-      publish()
-    }).observe(workbenchCanvas)
+    engineCanvas.addEventListener("dblclick", onReset)
+    const unsubscribeRouter = router.subscribe((node) => void applyRoute(node).catch(publishError))
 
-    runtime.handleResize()
-    positionEngineCanvas()
-    if (router.current !== initialNode) {
-      await applyRoute(router.current)
-      return
+    const dispose = (): void => {
+      if (disposed) return
+      disposed = true
+      routeRevision += 1
+      unsubscribeRouter()
+      unsubscribeFrame()
+      engineCanvas.removeEventListener("dblclick", onReset)
+      workbench.element.removeEventListener(STORYBOOK_DOM_WORKBENCH_EVENTS.navigate, onNavigate)
+      workbench.element.removeEventListener(STORYBOOK_DOM_WORKBENCH_EVENTS.scenario, onScenario)
+      router.dispose()
+      stage.dispose()
+      runtime.dispose()
+      workbench.dispose()
+      engineCanvas.hidden = true
     }
-    const committed = await stage.show(story)
-    if (!committed || router.current !== initialNode || selectionRevision !== 0) return
-    engineState = "Готово"
-    storyPanel.setOptions(panelOptions())
-    publish()
-    await waitForStorybookFrameBoundary()
-    if (router.current !== initialNode || selectionRevision !== 0) return
-    document.documentElement.dataset.engineStorybook = "ready"
+    window.addEventListener("pagehide", dispose, {once: true})
+    await applyRoute(router.current)
   } catch (error) {
     publishError(error)
     throw error
   }
 }
 
-function engineStorySource(story: Readonly<{id: string; source: string}>): StorybookStorySource {
+function applyOverview(
+  workbench: ReturnType<typeof createStorybookDomWorkbench>,
+  presentation: PreviewPresentation,
+  node: StorybookRouteTreeNode<string>,
+): StorybookDomStorySource {
+  const context = contextFor(node.path)
+  const children = ENGINE_STORYBOOK_CATALOG.routeTree.children(node.path)
+  const title = node.path === ""
+    ? "Engine · Обзор"
+    : context?.sectionLabel ?? context?.componentLabel ?? node.segment
+  const description = node.path === ""
+    ? "Публичные пространственные примитивы и production WebGPU-сцены."
+    : `Обзор ${title}: ${children.length} непосредственных разделов.`
+  updatePresentation(presentation, title, description, children.map((child) => {
+    if (child.kind === "leaf") return requireStory(child.path).variantLabel
+    const childContext = contextFor(child.path)
+    if (child.depth === 1) return childContext?.componentLabel ?? child.segment
+    return childContext?.sectionLabel ?? child.segment
+  }))
+  const source = overviewSource(title, description)
+  workbench.document.transaction(() => {
+    workbench.update("catalog.active", context?.componentId ?? null)
+    workbench.update("secondary.items", context === null ? Object.freeze([]) : sectionItems(context))
+    workbench.update("secondary.active", node.depth >= 2 ? context?.sectionId ?? null : null)
+    workbench.update("preview.label", title)
+    workbench.update("scenarios.items", context === null ? Object.freeze([]) : scenarioItems(context))
+    workbench.update("scenarios.active", null)
+    workbench.update("inspector.source", source)
+  })
+  return source
+}
+
+function applyLeaf(
+  workbench: ReturnType<typeof createStorybookDomWorkbench>,
+  presentation: PreviewPresentation,
+  index: StorybookDomCatalogIndexItem,
+  story: EngineStory,
+): StorybookDomStorySource {
+  updatePresentation(presentation, story.title, story.description, [])
+  const source = engineStorySource(story)
+  workbench.document.transaction(() => {
+    workbench.update("catalog.active", index.componentId)
+    workbench.update("secondary.items", sectionItems(index))
+    workbench.update("secondary.active", index.sectionId)
+    workbench.update("preview.label", story.title)
+    workbench.update("scenarios.items", scenarioItems(index))
+    workbench.update("scenarios.active", index.route)
+    workbench.update("inspector.source", source)
+  })
+  return source
+}
+
+function createPresentation(document: Document): PreviewPresentation {
+  const element = document.createElement("section")
+  const heading = document.createElement("h3")
+  const title = document.createTextNode("")
+  const paragraph = document.createElement("p")
+  const description = document.createTextNode("")
+  const items = document.createElement("ul")
+  element.className = "engine-storybook-presentation"
+  heading.className = "engine-storybook-presentation__title"
+  paragraph.className = "engine-storybook-presentation__description"
+  items.className = "engine-storybook-presentation__items"
+  heading.appendChild(title)
+  paragraph.appendChild(description)
+  element.append(heading, paragraph, items)
+  return Object.freeze({element, title, description, items})
+}
+
+function updatePresentation(
+  presentation: PreviewPresentation,
+  title: string,
+  description: string,
+  labels: readonly string[],
+): void {
+  presentation.title.data = title
+  presentation.description.data = description
+  const document = presentation.element.ownerDocument!
+  presentation.items.replaceChildren(...labels.map((label) => {
+    const item = document.createElement("li")
+    item.className = "engine-storybook-presentation__item"
+    item.appendChild(document.createTextNode(label))
+    return item
+  }))
+}
+
+function engineStorySource(story: EngineStory): StorybookDomStorySource {
   return Object.freeze({
     html: `<canvas id="engine-story-canvas" class="engine-story" data-story="${story.id}" aria-label="Живая сцена @engine/core"></canvas>`,
-    css: `.engine-story {
-  position: fixed;
-  width: 100%;
-  height: 100%;
-  display: block;
-  border: 0;
-  border-radius: 3px;
-  background: #05080e;
-  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 8%);
-  outline: none;
-  touch-action: none;
-}`,
+    css: ".engine-story { display: block; width: 100%; height: 100%; background: #05080e; touch-action: none; }",
     typescript: story.source,
   })
 }
 
-async function loadStableEngineStory(router: StorybookRouteTreeRouter<string>) {
-  while (true) {
-    const node = router.current
-    const route = engineStorybookPresentationRoute(node.path)
-    const index = requireStory(route)
-    const story = await ENGINE_STORYBOOK_CATALOG.load(route)
-    if (router.current === node) return Object.freeze({node, route, index, story})
+function overviewSource(title: string, description: string): StorybookDomStorySource {
+  return Object.freeze({
+    html: `<section class="engine-storybook-presentation"><h3>${escapeText(title)}</h3><p>${escapeText(description)}</p></section>`,
+    css: engineWorkbenchCss,
+    typescript: `const overview = document.createElement("section")\noverview.title = ${JSON.stringify(title)}\noverview.textContent = ${JSON.stringify(description)}\ndocument.appendChild(overview)`,
+  })
+}
+
+function catalogItems(): readonly StorybookDomNavigationItem[] {
+  const items = new Map<string, StorybookDomCatalogIndexItem>()
+  for (const item of ENGINE_STORYBOOK_CATALOG.index) if (!items.has(item.componentId)) items.set(item.componentId, item)
+  return Object.freeze([...items.values()].map((item) => Object.freeze({
+    id: item.componentId,
+    label: item.componentLabel,
+    route: item.componentId,
+    title: `${item.apiName} · ${item.tags.join(", ")}`,
+  })))
+}
+
+function sectionItems(selected: StorybookDomCatalogIndexItem): readonly StorybookDomNavigationItem[] {
+  const items = new Map<string, StorybookDomCatalogIndexItem>()
+  for (const item of ENGINE_STORYBOOK_CATALOG.index) {
+    if (item.componentId === selected.componentId && !items.has(item.sectionId)) items.set(item.sectionId, item)
   }
+  return Object.freeze([...items.values()].map((item) => Object.freeze({
+    id: item.sectionId,
+    label: item.sectionLabel,
+    route: `${item.componentId}/${item.sectionId}`,
+  })))
+}
+
+function scenarioItems(selected: StorybookDomCatalogIndexItem): readonly StorybookDomScenarioItem[] {
+  return Object.freeze(ENGINE_STORYBOOK_CATALOG.variants(selected.route).map((item) => Object.freeze({
+    id: item.route,
+    label: item.variantLabel,
+    title: item.title,
+  })))
+}
+
+function contextFor(path: string): StorybookDomCatalogIndexItem | null {
+  if (path === "") return null
+  return ENGINE_STORYBOOK_CATALOG.index.find(({route}) => route.startsWith(`${path}/`)) ?? null
+}
+
+function requireStory(route: string): StorybookDomCatalogIndexItem {
+  const item = ENGINE_STORYBOOK_CATALOG.find(route)
+  if (item === undefined) throw new Error(`Engine Storybook story not found: ${route}`)
+  return item
 }
 
 function requireEngineCanvas(): HTMLCanvasElement {
@@ -317,57 +358,12 @@ function requireEngineCanvas(): HTMLCanvasElement {
   return canvas
 }
 
-function requireStory(route: string): StorybookStoryIndexItem {
-  const story = ENGINE_STORYBOOK_CATALOG.find(route)
-  if (story === undefined) throw new Error(`Engine Storybook story not found: ${route}`)
-  return story
-}
-
-function catalogItems(collapsed: ReadonlySet<string>): readonly StorybookNavigationItem<string>[] {
-  const firstByComponent = new Map<string, StorybookStoryIndexItem>()
-  for (const item of ENGINE_STORYBOOK_CATALOG.index) {
-    if (!firstByComponent.has(item.componentId)) firstByComponent.set(item.componentId, item)
-  }
-  return [...firstByComponent.values()].map((item) => ({
-    id: item.componentId,
-    label: item.componentLabel,
-    route: item.componentId,
-    group: {
-      id: item.groupId,
-      label: item.groupLabel,
-      collapsed: collapsed.has(item.groupId),
-    },
-    searchText: `${item.apiName} ${item.tags.join(" ")}`,
-  }))
-}
-
-function sectionItems(selected: StorybookStoryIndexItem): readonly StorybookNavigationItem<string>[] {
-  const firstBySection = new Map<string, StorybookStoryIndexItem>()
-  for (const item of ENGINE_STORYBOOK_CATALOG.index) {
-    if (item.componentId === selected.componentId && !firstBySection.has(item.sectionId)) {
-      firstBySection.set(item.sectionId, item)
-    }
-  }
-  return [...firstBySection.values()].map((item) => ({
-    id: item.sectionId,
-    label: item.sectionLabel,
-    route: `${item.componentId}/${item.sectionId}`,
-  }))
-}
-
-function variantItems(selected: StorybookStoryIndexItem): readonly StorybookNavigationItem<string>[] {
-  return ENGINE_STORYBOOK_CATALOG.variants(selected.route).map((item) => ({
-    id: item.variantId,
-    label: item.variantLabel,
-    route: item.route,
-  }))
-}
-
 function publishError(error: unknown): void {
   document.documentElement.dataset.engineStorybook = "error"
-  document.documentElement.dataset.engineStorybookError = error instanceof Error
-    ? error.stack ?? error.message
-    : String(error)
+  document.documentElement.dataset.engineStorybookError = error instanceof Error ? error.stack ?? error.message : String(error)
 }
 
-if (typeof document !== "undefined") await startEngineStorybook()
+const escapeText = (value: string): string =>
+  value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;")
+
+if (typeof document !== "undefined") await start()

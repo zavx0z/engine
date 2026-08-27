@@ -65,12 +65,15 @@ other scenes.
 | Repository | Role | Storybook / Pages |
 | --- | --- | --- |
 | [Engine](https://github.com/zavx0z/engine) | Reusable WebGPU infrastructure | [Engine Storybook](https://zavx0z.github.io/engine/) |
-| [UI](https://github.com/zavx0z/ui) | Retained controls and interface composition | [planned UI Pages](https://zavx0z.github.io/ui/) |
-| [Layout](https://github.com/zavx0z/layout) | UI runtime, surfaces, HUD and spatial displays | [Layout Storybook](https://zavx0z.github.io/layout/) |
+| [Renderer](https://github.com/zavx0z/renderer) | Standard DOM, CSS/layout/display projection and retained WebGPU realization | Repository-owned checks |
+| [UI](https://github.com/zavx0z/ui) | DOM/CSS controls and interface composition | [planned UI Pages](https://zavx0z.github.io/ui/) |
 | [Node](https://github.com/zavx0z/node) | Node editor, layout and authoring surfaces | [Node Storybook](https://zavx0z.github.io/node/) |
 | [MetaFor](https://github.com/zavx0z/metafor) | Product integration and immersive domain projections | Product-owned surfaces |
 
-The sibling links are stable cross-repository targets. A sibling may still be in migration while its link is reserved.
+The live document path has one owner chain: `@zavx0z/dom` →
+`@zavx0z/renderer` → `@zavx0z/renderer-webgpu` → `@engine/core`. Generic
+Layout and `@ui/elements` are retired; the Node-owned `@nodes/layout` domain
+package remains independent of that retired runtime.
 
 ## Requirements
 
@@ -104,7 +107,7 @@ The full `bun run test` includes real WebGPU pipeline and pixel-readback tests a
 Generated `dist/` files are intentionally ignored. The static builder writes a
 schema-1 manifest with exact dependency revisions, routes, lazy chunks, sizes
 and SHA-256 hashes. GitHub Pages remains manual and owner-gated; its cold
-workflow must use immutable delivered revisions for shared Storybook, Layout,
+workflow must use immutable delivered revisions for shared Storybook, Renderer,
 UI and Highlighter before it may be dispatched.
 
 ## Consuming the core locally
