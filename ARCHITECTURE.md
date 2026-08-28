@@ -92,6 +92,19 @@ presentation boundary without rematerializing descendants.
 
 Renderer owns GPU buffers, textures, bind groups, pipeline selection, upload ranges, and resource invalidation. Consumers describe scene data; they do not allocate hidden renderer resources.
 
+Mutable `BufferAttribute` data carries validated element-dirty intervals that
+Renderer converts to bounded aligned queue writes with per-cache revision
+catch-up. Fragmented interval count and instance capacity are explicitly
+bounded. `InstanceLayer` is the target-neutral retained CPU ABI for dynamic
+batches: stable layer-owned generation-guarded slots, geometrically grown
+opaque records, and separate dense order. It does not define consumer records
+or a UI pipeline.
+
+The concrete rounded-rectangle presentation slice adds one shared unit quad
+and storage/order pipeline on top of that ABI. Consecutive draw-range views
+share the same stable slots; they are Engine objects, not UI components, and
+carry no DOM, hit-test or Node semantics.
+
 ### Demand-driven rendering
 
 An unchanged immersive interface should not require a permanent render loop. The Storybook follows the same law: input, resize, reset, or story selection requests one frame. Engine can still serve applications that explicitly choose animation.

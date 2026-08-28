@@ -14,7 +14,8 @@ The current core was migrated from the accepted `pkg/engine` implementation at M
 - Retained `Object3D` transforms and inherited world matrices.
 - Millimetre-based, right-handed, Z-up spatial coordinates.
 - Demand-driven frames for interfaces that are often idle.
-- Shared geometry, instancing, frustum culling, and bounded uploads.
+- Shared geometry, generation-safe instance layers, bounded partial uploads,
+  and a shared-unit-quad `InstancedRoundedRect` storage/order pipeline.
 - Analytical materials for common interface effects without texture or post-processing overhead.
 - A single source-level package boundary that is reusable beyond MetaFor.
 
