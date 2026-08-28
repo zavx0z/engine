@@ -17,12 +17,12 @@ The intended dependency direction is toward Engine. Engine never imports UI, Nod
 
 Cross-repository owners:
 
-| Owner | Repository | Pages |
-| --- | --- | --- |
-| Engine | [zavx0z/engine](https://github.com/zavx0z/engine) | [Engine Storybook](https://zavx0z.github.io/engine/) |
-| UI | [zavx0z/ui](https://github.com/zavx0z/ui) | [reserved](https://zavx0z.github.io/ui/) |
-| Node | [zavx0z/node](https://github.com/zavx0z/node) | [reserved](https://zavx0z.github.io/node/) |
-| Product | [zavx0z/metafor](https://github.com/zavx0z/metafor) | Product-owned surfaces |
+| Owner | Repository |
+| --- | --- |
+| Engine | [zavx0z/engine](https://github.com/zavx0z/engine) |
+| UI | [zavx0z/ui](https://github.com/zavx0z/ui) |
+| Node | [zavx0z/node](https://github.com/zavx0z/node) |
+| Product | [zavx0z/metafor](https://github.com/zavx0z/metafor) |
 
 ## Workspace boundaries
 
@@ -40,34 +40,6 @@ The core is the only runtime package. Its root export owns:
 - `Space` and `ViewPoint` scene boundaries.
 
 It has no production package dependencies. Browser and WebGPU APIs are the runtime platform. `bun-webgpu` exists only in the repository test toolchain.
-
-### `@engine/storybook`
-
-The Storybook is a static consumer of the public `@engine/core` entrypoint. It must not bypass the package boundary with relative imports into Core.
-
-Core-owned development descriptors live in `packages/core/storybook/**`, next
-to their semantic owner but outside `@engine/core` exports and production
-TypeScript project. The private repository Storybook composes those descriptors
-through `@zavx0z/storybook/catalog`; it does not copy scene semantics into the
-application package.
-
-Its responsibilities are:
-
-- construct small, observable live scenes;
-- expose story provenance and contract tags;
-- verify project-base-safe static output;
-- provide a public documentation surface;
-- remain deployable as plain files under `/engine/`.
-
-The app uses the shared semantic Workbench from exact
-`@zavx0z/storybook/*` natural subpaths and renders it through the document pipeline.
-It has no Layout, Elements or UI Component dependency. Exact detail previews
-remain an Engine-owned canvas layered over the resolved semantic preview-host
-box, so perspective camera, orbit/pan input and production renderer remain
-intact without adding reverse dependencies to Core. Overview routes render
-their own DOM presentation and never select a hidden first detail.
-
-The Storybook is not an alternate renderer and does not own Engine features.
 
 ## Core invariants
 
@@ -94,7 +66,7 @@ Renderer owns GPU buffers, textures, bind groups, pipeline selection, upload ran
 
 ### Demand-driven rendering
 
-An unchanged immersive interface should not require a permanent render loop. The Storybook follows the same law: input, resize, reset, or story selection requests one frame. Engine can still serve applications that explicitly choose animation.
+An unchanged immersive interface should not require a permanent render loop. Engine can still serve applications that explicitly choose animation.
 
 ### Analytical materials
 
@@ -112,7 +84,6 @@ All directories and filenames are lowercase. Multiword filenames use kebab-case.
 
 ```text
 packages/core/
-  storybook/    development-only owner descriptors and lazy scene modules
   src/
     animation/   temporal transforms
     core/        retained objects and geometry buffers
@@ -132,29 +103,7 @@ packages/core/
   test/          package-local test support
 ```
 
-Tests are co-located with their owner as `*.test.ts`. Live catalog stories are `*.stories.ts`. Atom Material Icons names are used for project-tree discoverability; local SVGs avoid a runtime dependency on an icon plugin.
-
-## Static Storybook pipeline
-
-`packages/storybook/scripts/build.ts` delegates the typed Engine app manifest
-to `@zavx0z/storybook/build`. The artifact is emitted with public base
-`/engine/` and contains:
-
-- `index.html` for the project root;
-- `404.html` as a static Pages fallback;
-- `.nojekyll` to preserve emitted asset names;
-- independent browser entry and lazy story chunks;
-- the exact Engine font;
-- `storybook-manifest.json` schema 1 with source/dependency revisions,
-  readiness and canvas evidence, emitted sizes and SHA-256 hashes.
-
-Story navigation uses pathname routes. Overview routes end in `/`, exact detail
-routes do not, and unknown suffixes fail closed instead of selecting a fallback
-story. The Pages fallback recovers only a route registered in the catalog.
-There is no active Pages workflow during the document-pipeline cutover. A new
-manual workflow may be introduced only after shared dependencies are delivered
-at immutable revisions; a local link graph or successful local build is not
-deployment evidence.
+Tests are co-located with their owner as `*.test.ts`.
 
 ## Performance change gate
 

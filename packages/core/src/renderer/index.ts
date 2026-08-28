@@ -62,19 +62,14 @@ import {
 import {renderItemSupportsPresentationClips} from "./presentation-clip-support"
 
 if (import.meta.hot) {
-  (import.meta.hot.accept as unknown as (dependencies: string[], callback: () => void) => void)([
-    "./shaders/mesh-basic.wgsl",
+  import.meta.hot.accept([
     "./shaders/thin-film.wgsl",
     "./shaders/holographic.wgsl",
     "./shaders/mesh-static.wgsl",
     "./shaders/mesh-skinned.wgsl",
     "./shaders/mesh-instanced.wgsl",
     "./shaders/line.wgsl",
-    "./shaders/text.wgsl",
-    "./shaders/image.wgsl",
-    "./shaders/image-external.wgsl",
-    "./shaders/rounded.wgsl",
-    "./shaders/color-picker.wgsl",
+    "./shaders/ui-shaders",
   ], () => {
     if (typeof location !== "undefined") location.reload()
   })

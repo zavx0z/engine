@@ -1,4 +1,4 @@
 interface:
   display_name: "Engine Development"
   short_description: "Develop the retained WebGPU engine"
-  default_prompt: "Use $engine-dev to implement and verify an Engine change against its public contracts and static WebGPU Storybook."
+  default_prompt: "Use $engine-dev to implement and verify an Engine change against its public contracts and WebGPU checks."

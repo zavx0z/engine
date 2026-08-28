@@ -2,7 +2,7 @@
 
 **Built for [MetaFor](https://github.com/zavx0z/metafor). Designed as reusable WebGPU infrastructure for any immersive interface.**
 
-[Live WebGPU Storybook](https://zavx0z.github.io/engine/) · [Architecture](./ARCHITECTURE.md) · [Contributing](./CONTRIBUTING.md)
+[Architecture](./ARCHITECTURE.md) · [Contributing](./CONTRIBUTING.md)
 
 Engine is a compact, retained WebGPU foundation for spatial applications. It owns scene transforms, geometry, materials, GPU resource management, rendering, picking, animation, loading, and view interaction. Product semantics stay outside the renderer, so the same primitives can support MetaFor, UI and Nodes as well as independent WebGPU applications.
 
@@ -30,45 +30,20 @@ or installing `@engine/core` alone never requests the asset.
 | Package | Atom Material icon | Responsibility | Publication |
 | --- | --- | --- | --- |
 | `@engine/core` | `Memory` | Runtime scene graph, renderer, geometry, materials, math, loaders, animation and interaction | Internal |
-| `@engine/storybook` | `AutoStories` | Static live WebGPU stories and repository documentation surface | Internal |
 
-Both workspaces are `private: true`. Internal means that no package is automatically published to a registry; it does not prevent source reuse under the repository license.
-
-## Storybook
-
-The Storybook is a real browser-rendered catalog, not a collection of
-screenshots. Every story constructs an `@engine/core` scene and renders it
-through WebGPU. Core-owned descriptors live under `packages/core/storybook/**`;
-the private repository app composes them through exact
-`@zavx0z/storybook/*` subpaths.
-
-Navigation uses pathname routes below `/engine/`. Overview routes end in `/`,
-exact leaves do not, and unknown suffixes return 404 instead of selecting a
-fallback scene. The shared five-region Workbench provides Russian navigation,
-source, Copy, controls and events while the preview keeps its own production
-Engine renderer and perspective camera.
-
-Included stories cover:
-
-- the Z-up millimetre coordinate contract;
-- instanced geometry and shared GPU data;
-- a one-pass holographic material;
-- a one-pass thin-film material.
-
-Each story has a lowercase semantic filename ending in `.stories.ts` and an
-explicit Atom Material Icons association. Story implementations load through
-separate dynamic imports, so opening one route does not eagerly execute the
-other scenes.
+The workspace is `private: true`. Internal means that the package is not
+automatically published to a registry; it does not prevent source reuse under
+the repository license.
 
 ## Repository map
 
-| Repository | Role | Storybook / Pages |
-| --- | --- | --- |
-| [Engine](https://github.com/zavx0z/engine) | Reusable WebGPU infrastructure | [Engine Storybook](https://zavx0z.github.io/engine/) |
-| [Renderer](https://github.com/zavx0z/renderer) | Standard DOM, CSS/layout/display projection and retained WebGPU realization | Repository-owned checks |
-| [UI](https://github.com/zavx0z/ui) | DOM/CSS controls and interface composition | [planned UI Pages](https://zavx0z.github.io/ui/) |
-| [Node](https://github.com/zavx0z/node) | Node editor, layout and authoring surfaces | [Node Storybook](https://zavx0z.github.io/node/) |
-| [MetaFor](https://github.com/zavx0z/metafor) | Product integration and immersive domain projections | Product-owned surfaces |
+| Repository | Role |
+| --- | --- |
+| [Engine](https://github.com/zavx0z/engine) | Reusable WebGPU infrastructure |
+| [Renderer](https://github.com/zavx0z/renderer) | Standard DOM, CSS/layout/display projection and retained WebGPU realization |
+| [UI](https://github.com/zavx0z/ui) | DOM/CSS controls and interface composition |
+| [Node](https://github.com/zavx0z/node) | Node editor, layout and authoring surfaces |
+| [MetaFor](https://github.com/zavx0z/metafor) | Product integration and immersive domain projections |
 
 The live document path has one owner chain: `@zavx0z/dom` →
 `@zavx0z/renderer` → `@zavx0z/renderer-webgpu` → `@engine/core`. Generic
@@ -78,7 +53,6 @@ package remains independent of that retired runtime.
 ## Requirements
 
 - [Bun](https://bun.sh/) `1.4.0`
-- A browser with WebGPU enabled for the live Storybook
 - A platform supported by `bun-webgpu` for GPU pipeline tests
 
 ## Development
@@ -88,27 +62,18 @@ bun install
 bun run check
 ```
 
-Use `$storybook ensure @engine/storybook` for the no-HMR runtime and
-`$storybook check @engine/storybook` for its package gates. The browser page is
-compiled once on its first request and remains stable until the exact owned
-process is restarted.
-
 Useful commands:
 
 ```bash
-bun run typecheck  # core and Storybook TypeScript contracts
-bun run test       # CPU, shader, pipeline and catalog tests
+bun run typecheck  # core TypeScript contracts
+bun run test       # CPU, shader and pipeline tests
 bun run test:ci    # deterministic CPU/source tests for runners without a GPU
 bun run check      # all checks in acceptance order
 ```
 
-The full `bun run test` includes real WebGPU pipeline and pixel-readback tests and therefore requires a usable GPU adapter. GitHub Pages CI runs the deterministic CPU/source suite plus the static browser build; a green Pages workflow is not presented as GPU-rendering proof.
-
-Generated `dist/` files are intentionally ignored. The static builder writes a
-schema-1 manifest with exact dependency revisions, routes, lazy chunks, sizes
-and SHA-256 hashes. GitHub Pages remains manual and owner-gated; its cold
-workflow must use immutable delivered revisions for shared Storybook, Renderer,
-UI and Highlighter before it may be dispatched.
+The full `bun run test` includes real WebGPU pipeline and pixel-readback tests
+and therefore requires a usable GPU adapter. The deterministic `test:ci` suite
+does not constitute GPU-rendering proof.
 
 ## Consuming the core locally
 
