@@ -22,6 +22,12 @@ import {storybookPublicPath, waitForStorybookFrameBoundary} from "@zavx0z/storyb
 import {StorybookRouteTreeRouter, type StorybookRouteTreeNode} from "@zavx0z/storybook/route-tree"
 import type {EngineStory} from "../../core/storybook/story.ts"
 import {ENGINE_STORYBOOK_CATALOG} from "./catalog.ts"
+import {
+  createEngineInspector,
+  engineInspectorCss,
+  type EngineInspector,
+  type EngineInspectorState,
+} from "./inspector.ts"
 import {WebGpuStage} from "./webgpu-stage.ts"
 
 const MOUNT = storybookPublicPath("engine", "/")
@@ -53,6 +59,14 @@ async function start(): Promise<void> {
   try {
     const semanticDocument = createDocument()
     const presentation = createPresentation(semanticDocument)
+    const inspector = createEngineInspector(
+      semanticDocument,
+      overviewInspectorState(
+        "",
+        "Engine · Обзор",
+        ENGINE_STORYBOOK_CATALOG.routeTree.children("").length,
+      ),
+    )
     const workbench = createStorybookDomWorkbench({
       document: semanticDocument,
       parent: semanticDocument,
@@ -69,8 +83,7 @@ async function start(): Promise<void> {
         "scenarios.label": "Варианты",
         "scenarios.items": Object.freeze([]),
         "scenarios.active": null,
-        "inspector.label": "Исходный код",
-        "inspector.source": overviewSource("Engine · Обзор", "Корневой каталог Engine"),
+        "inspector.node": inspector.element,
         status: {lead: "Создано для ", owner: "MetaFor", detail: " · Engine DOM Workbench"},
       },
     })
@@ -79,7 +92,7 @@ async function start(): Promise<void> {
       canvas: shellCanvas,
       document: semanticDocument,
       root: workbench.element,
-      styleSheets: [storybookDomWorkbenchCss, engineWorkbenchCss],
+      styleSheets: [storybookDomWorkbenchCss, engineWorkbenchCss, engineInspectorCss],
       font,
       tooltipDelayMs: 500,
     })
@@ -157,7 +170,7 @@ async function start(): Promise<void> {
       if (node.kind === "overview") {
         story = null
         index = contextFor(node.path)
-        const source = applyOverview(workbench, presentation, node)
+        const source = applyOverview(workbench, presentation, inspector, node)
         publish(node, source, "Обзор")
       } else {
         const nextIndex = requireStory(node.path)
@@ -165,7 +178,7 @@ async function start(): Promise<void> {
         if (revision !== routeRevision || router.current !== node) return
         index = nextIndex
         story = nextStory
-        const source = applyLeaf(workbench, presentation, nextIndex, nextStory)
+        const source = applyLeaf(workbench, presentation, inspector, nextIndex, nextStory)
         if (!await stage.show(nextStory) || revision !== routeRevision || router.current !== node) return
         publish(node, source, "Готово")
       }
@@ -211,6 +224,7 @@ async function start(): Promise<void> {
 function applyOverview(
   workbench: ReturnType<typeof createStorybookDomWorkbench>,
   presentation: PreviewPresentation,
+  inspector: EngineInspector,
   node: StorybookRouteTreeNode<string>,
 ): StorybookDomStorySource {
   const context = contextFor(node.path)
@@ -228,6 +242,7 @@ function applyOverview(
     return childContext?.sectionLabel ?? child.segment
   }))
   const source = overviewSource(title, description)
+  inspector.update(overviewInspectorState(node.path, title, children.length))
   workbench.document.transaction(() => {
     workbench.update("catalog.active", context?.componentId ?? null)
     workbench.update("secondary.items", context === null ? Object.freeze([]) : sectionItems(context))
@@ -235,7 +250,6 @@ function applyOverview(
     workbench.update("preview.label", title)
     workbench.update("scenarios.items", context === null ? Object.freeze([]) : scenarioItems(context))
     workbench.update("scenarios.active", null)
-    workbench.update("inspector.source", source)
   })
   return source
 }
@@ -243,11 +257,13 @@ function applyOverview(
 function applyLeaf(
   workbench: ReturnType<typeof createStorybookDomWorkbench>,
   presentation: PreviewPresentation,
+  inspector: EngineInspector,
   index: StorybookDomCatalogIndexItem,
   story: EngineStory,
 ): StorybookDomStorySource {
   updatePresentation(presentation, story.title, story.description, [])
   const source = engineStorySource(story)
+  inspector.update(storyInspectorState(index, story))
   workbench.document.transaction(() => {
     workbench.update("catalog.active", index.componentId)
     workbench.update("secondary.items", sectionItems(index))
@@ -255,7 +271,6 @@ function applyLeaf(
     workbench.update("preview.label", story.title)
     workbench.update("scenarios.items", scenarioItems(index))
     workbench.update("scenarios.active", index.route)
-    workbench.update("inspector.source", source)
   })
   return source
 }
@@ -308,6 +323,42 @@ function overviewSource(title: string, description: string): StorybookDomStorySo
     css: engineWorkbenchCss,
     typescript: `const overview = document.createElement("section")\noverview.title = ${JSON.stringify(title)}\noverview.textContent = ${JSON.stringify(description)}\ndocument.appendChild(overview)`,
   })
+}
+
+function overviewInspectorState(
+  path: string,
+  title: string,
+  childCount: number,
+): EngineInspectorState {
+  return Object.freeze({
+    context: title,
+    entries: Object.freeze([
+      Object.freeze({id: "kind", label: "Тип", value: "Обзор"}),
+      Object.freeze({id: "route", label: "Маршрут", value: overviewRoute(path)}),
+      Object.freeze({id: "children", label: "Разделы", value: String(childCount)}),
+    ]),
+  })
+}
+
+function storyInspectorState(
+  index: StorybookDomCatalogIndexItem,
+  story: EngineStory,
+): EngineInspectorState {
+  return Object.freeze({
+    context: story.title,
+    entries: Object.freeze([
+      Object.freeze({id: "api", label: "API", value: index.apiName}),
+      Object.freeze({id: "route", label: "Маршрут", value: `/${index.route}`}),
+      Object.freeze({id: "story-id", label: "Story ID", value: story.id}),
+      Object.freeze({id: "group", label: "Группа", value: story.group}),
+      Object.freeze({id: "source-file", label: "Файл", value: story.sourceFile}),
+      Object.freeze({id: "tags", label: "Теги", value: story.tags.join(", ") || "—"}),
+    ]),
+  })
+}
+
+function overviewRoute(path: string): string {
+  return path.length === 0 ? "/" : `/${path}/`
 }
 
 function catalogItems(): readonly StorybookDomNavigationItem[] {

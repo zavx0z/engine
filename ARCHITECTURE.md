@@ -67,6 +67,11 @@ box, so perspective camera, orbit/pan input and production renderer remain
 intact without adding reverse dependencies to Core. Overview routes render
 their own DOM presentation and never select a hidden first detail.
 
+The right Workbench region mounts an Engine-owned same-Document Props Inspector.
+It projects exact route and story metadata without importing UI components;
+HTML, CSS and TypeScript source documents remain provenance rather than visible
+Inspector sections.
+
 The Storybook is not an alternate renderer and does not own Engine features.
 
 ## Core invariants

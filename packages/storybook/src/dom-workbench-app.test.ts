@@ -8,6 +8,7 @@ describe("Engine DOM Workbench application", () => {
     expect(source).toContain('from "@zavx0z/storybook/workbench"')
     expect(source).not.toContain("@zavx0z/storybook/dom/")
     expect(source).toContain("createStorybookDomWorkbench")
+    expect(source).toContain("createEngineInspector")
     expect(source).toContain("createDocumentCanvasRuntime")
     expect(source).toContain('shellCanvas.id = "engine-workbench-canvas"')
     expect(source).toContain('document.getElementById("engine-story-canvas")')
@@ -15,6 +16,12 @@ describe("Engine DOM Workbench application", () => {
     expect(source).toContain("workbench.elements.previewHost")
     expect(source).toContain("await stage.show(nextStory)")
     expect(source).toContain("runtime.render()")
+    expect(source).toContain('"inspector.node": inspector.element')
+    expect(source).toContain("inspector.update(overviewInspectorState")
+    expect(source).toContain("inspector.update(storyInspectorState")
+    expect(source).not.toContain('"inspector.label"')
+    expect(source).not.toContain('"inspector.source"')
+    expect(source).not.toContain('workbench.update("inspector.source"')
     for (const forbidden of [
       "@layout/",
       "@ui/elements",
@@ -57,6 +64,20 @@ describe("Engine DOM Workbench application", () => {
     expect(source).toContain("stage.dispose()")
     expect(source).toContain("runtime.dispose()")
     expect(source).toContain("workbench.dispose()")
+  })
+
+  test("keeps source as provenance while mounting an Engine-owned metadata Inspector", async () => {
+    const source = await Bun.file(new URL("./app.ts", import.meta.url)).text()
+    const inspector = await Bun.file(new URL("./inspector.ts", import.meta.url)).text()
+
+    expect(source).toContain('"inspector.node": inspector.element')
+    expect(source).toContain("dataset.engineStorybookHtml = source.html")
+    expect(source).toContain("dataset.engineStorybookCss = source.css")
+    expect(source).toContain("dataset.engineStorybookTypescript = source.typescript")
+    expect(inspector).toContain('heading.textContent = "Props"')
+    expect(inspector).toContain('sectionHeading.textContent = "Metadata"')
+    expect(inspector).not.toContain("@ui/")
+    expect(inspector).not.toContain("StorybookDomStorySource")
   })
 
   test("declares only exact Engine and document-pipeline development owners", async () => {
