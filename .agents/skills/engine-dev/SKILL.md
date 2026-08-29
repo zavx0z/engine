@@ -67,13 +67,17 @@ If the server already exists, `attach` and `open` reuse it. Ports, process
 selectors and per-package lifecycle are never Engine-facing identities.
 
 Routes use pathname hierarchy. Overview routes end in `/`, exact leaves do
-not, and unknown suffixes must return 404. Visual evidence reads the exact
-Engine-owned `#engine-story-canvas` inside the shared package tab and rejects a
-black result. The external shared Workbench owns navigation and diagnostics;
-the preview canvas, production Renderer and perspective camera remain Engine-owned.
+not, and unknown suffixes must return 404. An owner story contributes its
+caller-owned `Space`, camera preset and semantic preview anchor through the
+shared bounded-world host. It must not create a native Canvas, private Renderer,
+parallel host Space, browser listener set or animation-frame loop. The external
+Workbench Experience owns the one `external-storybook-canvas`, production
+Renderer, host Space, input and frame lifecycle; Engine owns scene content,
+camera math and the generic one-canvas multi-view composition contract.
 
-For a visual change, use the external Storybook to verify the exact story, WebGPU canvas, console, and a
-non-black rendered result with the browser tooling available to the task. Keep
+For a visual change, use the external Storybook to verify the exact story,
+exactly one native `external-storybook-canvas`, an empty console and a visible
+non-black bounded scene through the agent interface available to the task. Keep
 WebGPU Inspector external to source and build output. Performance claims need a
 representative workload and recorded CPU, allocation/upload, draw/dispatch,
 latency, frame, and memory evidence.

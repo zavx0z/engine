@@ -56,11 +56,12 @@ the `@engine/core` package session.
 
 The plain `storybook-runtime/1` adapter imports only the public `@engine/core`
 owner and the local story contract. The shared Workbench supplies one semantic
-preview host and its measured bounds. The adapter creates a separate native
-canvas over those bounds, then uses the production Renderer and ViewPoint for
-the selected scene. It publishes metadata/source/props structurally; it does
-not own navigation, search, routing, diagnostics, package lifecycle or a
-second Workbench.
+preview host and atomically attaches the selected owner `Space` as a bounded
+view of the existing package-tab `DocumentSpaceRuntime`. The shared host owns
+the one native canvas, Renderer, host-mode ViewPoint, input and frame lifecycle.
+The adapter publishes metadata/source/props structurally; it does not own
+navigation, search, routing, diagnostics, package lifecycle or another
+presentation host.
 
 Overview routes are shared-shell states and never execute a hidden first leaf.
 The Storybook remains a development projection, not an alternate renderer or
@@ -101,6 +102,29 @@ The concrete rounded-rectangle presentation slice adds one shared unit quad
 and storage/order pipeline on top of that ABI. Consecutive draw-range views
 share the same stable slots; they are Engine objects, not UI components, and
 carry no DOM, hit-test or Node semantics.
+
+### Bounded view composition
+
+One initialized `Renderer` can present a base `Space`, ordered bounded
+descendant `Space` views and foreground overlays through one canvas and one
+current texture. `Renderer.renderComposition()` accepts physical backing-pixel
+viewports. Every bounded root is an exact non-nested descendant of the base
+Space and is excluded from base traversal, so one retained object subtree is
+not submitted through two cameras accidentally.
+
+Each bounded view owns its exact `ViewPoint`, frustum, view/scene uniforms,
+background and cleared depth/stencil state. Viewport and scissor constrain its
+color to the declared rectangle; pixels outside remain owned by the preceding
+composition layer. The base is presented first, bounded views follow caller
+order, and optional overlays remain foreground. Geometry and pipelines stay in
+the same Renderer caches, and last-frame capture observes the final complete
+composition. Existing `render()` and `renderFrame()` are compatibility entry
+points over the same composition path.
+
+`ViewPoint` also supports `controls: "host"`. In that mode it owns camera math
+but no browser listener or element mutation. The browser composition owner
+supplies and updates one client-coordinate viewport, routes `orbit`, `pan` and
+anchored `zoom`, and coalesces presentation requests itself.
 
 ### Demand-driven rendering
 
