@@ -16,20 +16,15 @@
     "packages/*"
   ],
   "scripts": {
-    "check": "bun run typecheck && bun run test && bun run --cwd packages/storybook build",
-    "check:ci": "bun run typecheck && bun run test:ci && bun run --cwd packages/storybook build",
+    "check": "bun run typecheck && bun run test",
+    "check:ci": "bun run typecheck && bun run test:ci",
     "test": "bun test packages",
     "test:ci": "bun test packages --path-ignore-patterns='**/*.webgpu.test.ts'",
-    "typecheck": "bun run --cwd packages/core typecheck && bun run --cwd packages/storybook typecheck"
+    "typecheck": "tsc --noEmit -p tsconfig.json"
   },
   "devDependencies": {
     "@types/bun": "^1.4.0",
     "@webgpu/types": "^0.1.68",
-    "@zavx0z/dom": "link:@zavx0z/dom",
-    "@zavx0z/renderer": "link:@zavx0z/renderer",
-    "@zavx0z/renderer-browser": "link:@zavx0z/renderer-browser",
-    "@zavx0z/renderer-webgpu": "link:@zavx0z/renderer-webgpu",
-    "@zavx0z/storybook": "link:@zavx0z/storybook",
     "bun-webgpu": "^0.1.6",
     "typescript": "^7.0.2"
   }

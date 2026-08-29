@@ -19,7 +19,7 @@ Cross-repository owners:
 
 | Owner | Repository | Pages |
 | --- | --- | --- |
-| Engine | [zavx0z/engine](https://github.com/zavx0z/engine) | [Engine Storybook](https://zavx0z.github.io/engine/) |
+| Engine | [zavx0z/engine](https://github.com/zavx0z/engine) | External declaration |
 | UI | [zavx0z/ui](https://github.com/zavx0z/ui) | [reserved](https://zavx0z.github.io/ui/) |
 | Node | [zavx0z/node](https://github.com/zavx0z/node) | [reserved](https://zavx0z.github.io/node/) |
 | Product | [zavx0z/metafor](https://github.com/zavx0z/metafor) | Product-owned surfaces |
@@ -41,38 +41,30 @@ The core is the only runtime package. Its root export owns:
 
 It has no production package dependencies. Browser and WebGPU APIs are the runtime platform. `bun-webgpu` exists only in the repository test toolchain.
 
-### `@engine/storybook`
+### External Storybook declaration
 
-The Storybook is a static consumer of the public `@engine/core` entrypoint. It must not bypass the package boundary with relative imports into Core.
+Engine contains one runtime package and no Storybook npm package. The project
+declaration at `.storybook/manifest.json` references the `@engine/core` package
+declaration under `packages/core/.storybook/`. Both are versioned JSON data;
+they import nothing and own no process, port, build or frontend.
 
-Core-owned development descriptors live in `packages/core/storybook/**`, next
-to their semantic owner but outside `@engine/core` exports and production
-TypeScript project. The private repository Storybook composes those descriptors
-through `@zavx0z/storybook/catalog`; it does not copy scene semantics into the
-application package.
+Core-owned story modules remain in `packages/core/storybook/**`, outside
+production exports and the production TypeScript project. `catalog.json` binds
+each exact module/export and preserves the five accepted route suffixes. The
+external compiler generates literal lazy imports and independently versions
+the `@engine/core` package session.
 
-Its responsibilities are:
+The plain `storybook-runtime/1` adapter imports only the public `@engine/core`
+owner and the local story contract. The shared Workbench supplies one semantic
+preview host and its measured bounds. The adapter creates a separate native
+canvas over those bounds, then uses the production Renderer and ViewPoint for
+the selected scene. It publishes metadata/source/props structurally; it does
+not own navigation, search, routing, diagnostics, package lifecycle or a
+second Workbench.
 
-- construct small, observable live scenes;
-- expose story provenance and contract tags;
-- verify project-base-safe static output;
-- provide a public documentation surface;
-- remain deployable as plain files under `/engine/`.
-
-The app uses the shared semantic Workbench from exact
-`@zavx0z/storybook/*` natural subpaths and renders it through the document pipeline.
-It has no Layout, Elements or UI Component dependency. Exact detail previews
-remain an Engine-owned canvas layered over the resolved semantic preview-host
-box, so perspective camera, orbit/pan input and production renderer remain
-intact without adding reverse dependencies to Core. Overview routes render
-their own DOM presentation and never select a hidden first detail.
-
-The right Workbench region mounts an Engine-owned same-Document Props Inspector.
-It projects exact route and story metadata without importing UI components;
-HTML, CSS and TypeScript source documents remain provenance rather than visible
-Inspector sections.
-
-The Storybook is not an alternate renderer and does not own Engine features.
+Overview routes are shared-shell states and never execute a hidden first leaf.
+The Storybook remains a development projection, not an alternate renderer or
+an Engine feature owner.
 
 ## Core invariants
 
@@ -130,6 +122,7 @@ All directories and filenames are lowercase. Multiword filenames use kebab-case.
 
 ```text
 packages/core/
+  .storybook/   external package declaration, catalog and structural runtime
   storybook/    development-only owner descriptors and lazy scene modules
   src/
     animation/   temporal transforms
@@ -152,27 +145,19 @@ packages/core/
 
 Tests are co-located with their owner as `*.test.ts`. Live catalog stories are `*.stories.ts`. Atom Material Icons names are used for project-tree discoverability; local SVGs avoid a runtime dependency on an icon plugin.
 
-## Static Storybook pipeline
+## External Storybook delivery
 
-`packages/storybook/scripts/build.ts` delegates the typed Engine app manifest
-to `@zavx0z/storybook/build`. The artifact is emitted with public base
-`/engine/` and contains:
+One external server attaches the project declaration and serves every package
+tab from one origin. `@engine/core` receives its own compiler context, immutable
+revisions, last-good artifact, diagnostics and package-scoped updates. Engine
+does not install the tool or write static output through a package-local script.
 
-- `index.html` for the project root;
-- `404.html` as a static Pages fallback;
-- `.nojekyll` to preserve emitted asset names;
-- independent browser entry and lazy story chunks;
-- the exact Engine font;
-- `storybook-manifest.json` schema 1 with source/dependency revisions,
-  readiness and canvas evidence, emitted sizes and SHA-256 hashes.
-
-Story navigation uses pathname routes. Overview routes end in `/`, exact detail
-routes do not, and unknown suffixes fail closed instead of selecting a fallback
-story. The Pages fallback recovers only a route registered in the catalog.
-There is no active Pages workflow during the document-pipeline cutover. A new
-manual workflow may be introduced only after shared dependencies are delivered
-at immutable revisions; a local link graph or successful local build is not
-deployment evidence.
+Story navigation uses the preserved pathname suffixes. Overview routes end in
+`/`, exact detail routes do not, and unknown suffixes fail closed instead of
+selecting a fallback story. The default font remains an Engine asset resolved
+through its public subpath; declaration files do not copy it. Deployment or
+Pages delivery remains a separate owner decision and is not implied by a local
+attach, package build or browser proof.
 
 ## Performance change gate
 

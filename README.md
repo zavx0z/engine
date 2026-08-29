@@ -2,7 +2,7 @@
 
 **Built for [MetaFor](https://github.com/zavx0z/metafor). Designed as reusable WebGPU infrastructure for any immersive interface.**
 
-[Live WebGPU Storybook](https://zavx0z.github.io/engine/) · [Architecture](./ARCHITECTURE.md) · [Contributing](./CONTRIBUTING.md)
+[Architecture](./ARCHITECTURE.md) · [Contributing](./CONTRIBUTING.md)
 
 Engine is a compact, retained WebGPU foundation for spatial applications. It owns scene transforms, geometry, materials, GPU resource management, rendering, picking, animation, loading, and view interaction. Product semantics stay outside the renderer, so the same primitives can support MetaFor, UI and Nodes as well as independent WebGPU applications.
 
@@ -31,41 +31,42 @@ or installing `@engine/core` alone never requests the asset.
 | Package | Atom Material icon | Responsibility | Publication |
 | --- | --- | --- | --- |
 | `@engine/core` | `Memory` | Runtime scene graph, renderer, geometry, materials, math, loaders, animation and interaction | Internal |
-| `@engine/storybook` | `AutoStories` | Static live WebGPU stories and repository documentation surface | Internal |
 
-Both workspaces are `private: true`. Internal means that no package is automatically published to a registry; it does not prevent source reuse under the repository license.
+The runtime workspace is `private: true`. External Storybook declarations are
+development data, not a second npm workspace or production export.
 
 ## Storybook
 
 The Storybook is a real browser-rendered catalog, not a collection of
 screenshots. Every story constructs an `@engine/core` scene and renders it
-through WebGPU. Core-owned descriptors live under `packages/core/storybook/**`;
-the private repository app composes them through exact
-`@zavx0z/storybook/*` subpaths.
+through WebGPU. The project declaration lives at `.storybook/manifest.json`;
+the package declaration, catalog and structural runtime live under
+`packages/core/.storybook/`. Engine neither installs nor imports Storybook.
 
-Navigation uses pathname routes below `/engine/`. Overview routes end in `/`,
-exact leaves do not, and unknown suffixes return 404 instead of selecting a
-fallback scene. The shared five-region Workbench provides Russian navigation,
-source, Copy, controls and events while the preview keeps its own production
-Engine renderer and perspective camera.
+The five historical route suffixes are preserved exactly. Overview routes end
+in `/`, exact leaves do not, and unknown suffixes return 404 instead of
+selecting a fallback scene. One external server/origin supplies the shared
+Workbench; each `@engine/core` tab gets one independently built package realm,
+while its preview keeps the production Engine renderer and perspective camera.
 
 Included stories cover:
 
 - the Z-up millimetre coordinate contract;
 - instanced geometry and shared GPU data;
 - a one-pass holographic material;
-- a one-pass thin-film material.
+- a one-pass thin-film material;
+- retained rounded presentation clipping for text.
 
 Each story has a lowercase semantic filename ending in `.stories.ts` and an
-explicit Atom Material Icons association. Story implementations load through
-separate dynamic imports, so opening one route does not eagerly execute the
-other scenes.
+explicit Atom Material Icons association. JSON contains only literal
+module/export references; the external compiler generates separate lazy
+imports, so opening one route does not eagerly execute the other scenes.
 
 ## Repository map
 
 | Repository | Role | Storybook / Pages |
 | --- | --- | --- |
-| [Engine](https://github.com/zavx0z/engine) | Reusable WebGPU infrastructure | [Engine Storybook](https://zavx0z.github.io/engine/) |
+| [Engine](https://github.com/zavx0z/engine) | Reusable WebGPU infrastructure | External declaration |
 | [Renderer](https://github.com/zavx0z/renderer) | Standard DOM, CSS/layout/display projection and retained WebGPU realization | Repository-owned checks |
 | [UI](https://github.com/zavx0z/ui) | DOM/CSS controls and interface composition | [planned UI Pages](https://zavx0z.github.io/ui/) |
 | [Node](https://github.com/zavx0z/node) | Node editor, layout and authoring surfaces | [Node Storybook](https://zavx0z.github.io/node/) |
@@ -89,27 +90,33 @@ bun install
 bun run check
 ```
 
-Use `$storybook ensure @engine/storybook` for the no-HMR runtime and
-`$storybook check @engine/storybook` for its package gates. The browser page is
-compiled once on its first request and remains stable until the exact owned
-process is restarted.
+Use one external Storybook server; package attach/open never starts another:
+
+```bash
+storybook serve /path/to/engine
+storybook check /path/to/engine
+storybook open @engine/core space/coordinate-system/z-up
+storybook status
+storybook stop
+```
 
 Useful commands:
 
 ```bash
-bun run typecheck  # core and Storybook TypeScript contracts
-bun run test       # CPU, shader, pipeline and catalog tests
+bun run typecheck  # production and declaration-owned TypeScript contracts
+bun run test       # CPU, shader, pipeline and declaration parity tests
 bun run test:ci    # deterministic CPU/source tests for runners without a GPU
 bun run check      # all checks in acceptance order
 ```
 
-The full `bun run test` includes real WebGPU pipeline and pixel-readback tests and therefore requires a usable GPU adapter. GitHub Pages CI runs the deterministic CPU/source suite plus the static browser build; a green Pages workflow is not presented as GPU-rendering proof.
+The full `bun run test` includes real WebGPU pipeline and pixel-readback tests
+and therefore requires a usable GPU adapter. `bun run test:ci` remains the
+deterministic non-GPU boundary; live package-tab evidence belongs to the
+external server and is a separate acceptance step.
 
-Generated `dist/` files are intentionally ignored. The static builder writes a
-schema-1 manifest with exact dependency revisions, routes, lazy chunks, sizes
-and SHA-256 hashes. GitHub Pages remains manual and owner-gated; its cold
-workflow must use immutable delivered revisions for shared Storybook, Renderer,
-UI and Highlighter before it may be dispatched.
+Generated external revisions remain tool-owned and are not written by Engine.
+GitHub Pages remains manual and owner-gated; no workflow or deployment is
+created by attaching this declaration.
 
 ## Consuming the core locally
 

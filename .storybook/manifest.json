@@ -1,0 +1,13 @@
+{
+  "$schema": "https://raw.githubusercontent.com/zavx0z/storybook/main/schemas/manifest.schema.json",
+  "schemaVersion": 1,
+  "kind": "project",
+  "id": "engine",
+  "label": "Engine",
+  "readme": "../README.md",
+  "packages": [
+    {
+      "declaration": "../packages/core/.storybook/manifest.json"
+    }
+  ]
+}

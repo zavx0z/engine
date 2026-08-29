@@ -1,8 +1,9 @@
 # Engine agent rules
 
 - Use `$engine-dev` from `.agents/skills/engine-dev` for Engine implementation,
-  tests and GPU evidence. Use the single global `$storybook` for
-  `@engine/storybook` lifecycle, static build and browser verification.
+  tests and GPU evidence. Engine exposes only external declarations under
+  `.storybook/` and `packages/core/.storybook/`; use the global `$storybook`
+  one-server workflow for attach, package checks and browser verification.
 - Read `ARCHITECTURE.md`, the affected public contract, implementation, and
   focused tests before changing behavior.
 - Keep product, UI-control, node-authoring, and MetaFor domain semantics out of

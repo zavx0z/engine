@@ -1,0 +1,105 @@
+{
+  "schemaVersion": 1,
+  "readOnlyBaseline": true,
+  "oldPrivatePackage": "@engine/storybook",
+  "source": {
+    "projectHead": "18c55d6c3dc68d1f2ab257378a505e5bac2eea3e",
+    "routeCatalog": "packages/storybook/src/catalog.ts",
+    "routeCatalogSha256": "137bc8dff0860794e37491110d14097061c678822999eff2cad18d4f27cc2032",
+    "authority": "current source catalog; dist is not authoritative"
+  },
+  "routeBase": {
+    "developmentBasePath": "/engine",
+    "staticBasePath": "/engine",
+    "canonicalRules": {
+      "overviewTrailingSlash": true,
+      "leafTrailingSlash": false,
+      "knownNonCanonicalRedirectStatus": 308,
+      "unknownRouteStatus": 404,
+      "fallbackToFirstLeaf": false
+    }
+  },
+  "leafRoutes": [
+    "space/coordinate-system/z-up",
+    "instanced-mesh/geometry/boxes",
+    "holographic-material/geometry/torus",
+    "thin-film-material/geometry/sphere",
+    "text/presentation-clip/stencil"
+  ],
+  "overviewRoutes": [
+    "",
+    "space",
+    "space/coordinate-system",
+    "instanced-mesh",
+    "instanced-mesh/geometry",
+    "holographic-material",
+    "holographic-material/geometry",
+    "thin-film-material",
+    "thin-film-material/geometry",
+    "text",
+    "text/presentation-clip"
+  ],
+  "hashes": {
+    "algorithm": "sha256",
+    "routeSerialization": "UTF-8 ordered routes joined by LF with no trailing LF",
+    "leafRoutes": "ccb020dbc8d92f40cbd01e72d1cf1ae0cd2f8f148c7a5735a811b990a7d503b3",
+    "overviewRoutes": "89c83925ddfa6833a9745258970a2ff81a176f5aa6be13a4e4ec8e2c84dd96b1",
+    "combinedRoutes": "07381fd6d5e8d037bd907ef59c51044cfce049d9a8bc16f75a9007aea26b5d13",
+    "ownerResourceSerialization": "UTF-8 path, TAB, sha256 records joined by LF with no trailing LF",
+    "ownerResources": "923ca70159c67c50a52770c68433478fca45ffe404aa7ad28abc04646acae47a"
+  },
+  "ownerResources": [
+    {
+      "path": "README.md",
+      "sha256": "a3c7bb629171f2d5eea922364faed3dc68358c2c1b89b922b4f2cbd5e1dacb1c"
+    },
+    {
+      "path": "packages/core/static/fonts/jetbrains-mono-bold.ttf",
+      "sha256": "d22c4f3821d725eb01210d278d95dfcfcaadc34699a06658d47c8a5cc5830ada"
+    },
+    {
+      "path": "packages/core/storybook/README.md",
+      "sha256": "815e1b3d1fe01732f4f35d54d492fd4f6161723dde2dd719eaacf4e2f3e0af46"
+    },
+    {
+      "path": "packages/core/storybook/catalog.ts",
+      "sha256": "871a5b66e6045064d6157e0f2b4b1ebf4f4a90a911d42132307932522981cb20"
+    },
+    {
+      "path": "packages/core/storybook/foundations/coordinate-space.stories.ts",
+      "sha256": "0ad810d6dad9e6a1d8f554273d02fbef5cbc26ee11811baa4854850006afdb18"
+    },
+    {
+      "path": "packages/core/storybook/geometry/instanced-boxes.stories.ts",
+      "sha256": "a279732419418ea403710bc5d285aa36f036862d445b03b20f2e6da46eeb6162"
+    },
+    {
+      "path": "packages/core/storybook/icons.ts",
+      "sha256": "b147bba92ac90f2a7f41acb7b3c50bd4f46129dc77a57d7851077f0f82a53d6b"
+    },
+    {
+      "path": "packages/core/storybook/materials/holographic-torus.stories.ts",
+      "sha256": "3db33194cc95c96ee0dc59ea234d09f3da58ac30f4a3df69b92ef60fcfe54634"
+    },
+    {
+      "path": "packages/core/storybook/materials/thin-film-sphere.stories.ts",
+      "sha256": "afaeef44b0ebb5fa5dca8a9c0f0751d9835777ba63dac620a7c66537164e1d72"
+    },
+    {
+      "path": "packages/core/storybook/metadata.ts",
+      "sha256": "af1a07af5281aa5ec2763c216c671453e3c0bebf328bd8c5efcdebf13821d8c6"
+    },
+    {
+      "path": "packages/core/storybook/package-boundary.test.ts",
+      "sha256": "abee02dfa9008fd2cceadb7d62e1652808647a7673715a65da64b66d02b23dd2"
+    },
+    {
+      "path": "packages/core/storybook/story.ts",
+      "sha256": "f09fb3f2ade248bfd9629c9451fafec0e85bebc321c975c2c3caced50d7670bf"
+    },
+    {
+      "path": "packages/core/storybook/text/stencil-clipping.stories.ts",
+      "sha256": "410888876a97d77a1a08034e6612b171dde715a4ff608aaefcf85d53fafb72df"
+    }
+  ]
+}

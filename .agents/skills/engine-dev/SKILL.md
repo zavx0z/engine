@@ -28,8 +28,8 @@ bypass the document default.
 
 All directories and filenames are lowercase; multiword filenames use
 kebab-case. Tests end in `.test.ts` and live catalog entries in `.stories.ts`.
-Stories render through the production renderer, remain bounded and
-demand-driven, and work from the static `/engine/` base.
+Stories render through the production renderer and remain bounded and
+demand-driven. Their exact legacy route suffixes remain declaration data.
 
 ## Checks
 
@@ -39,34 +39,45 @@ checks:
 ```bash
 bun run typecheck
 bun run test:ci
-bun run build
+storybook check /path/to/engine
 ```
 
 `bun run test:ci` is deterministic without a GPU. Use `bun run test` or
 `bun run check` when real `bun-webgpu` pipeline and pixel-readback evidence is
-required and a usable adapter is available. A green CPU/static build is not GPU
+required and a usable adapter is available. A green CPU/package build is not GPU
 or visual proof.
 
 ## Storybook and evidence
 
-Use the global `$storybook` with exact package `@engine/storybook` for
-lifecycle, automatic origin, static build and browser evidence. This skill does
-not own a Storybook process, port, registry, target, lifecycle script or shared
-delivery rule. Engine package requirements retain only Engine-specific routes,
-font ownership and GPU expectations.
+Engine does not install Storybook and owns no Storybook process, port, build or
+lifecycle wrapper. The repository declaration is `.storybook/manifest.json`;
+the `@engine/core` catalog, runtime adapter and package overview are under
+`packages/core/.storybook/`. Use the external global tool as one server:
+
+```bash
+storybook serve /path/to/engine
+storybook attach /path/to/engine
+storybook check /path/to/engine
+storybook open @engine/core space/coordinate-system/z-up
+storybook status
+storybook stop
+```
+
+If the server already exists, `attach` and `open` reuse it. Ports, process
+selectors and per-package lifecycle are never Engine-facing identities.
 
 Routes use pathname hierarchy. Overview routes end in `/`, exact leaves do
-not, and unknown suffixes must return 404. The readiness marker is
-`engineStorybook=ready`; visual evidence reads the exact
-`#engine-story-canvas` and rejects a black result. The surrounding catalog is
-the shared five-region Workbench, but its preview remains Engine-owned.
+not, and unknown suffixes must return 404. Visual evidence reads the exact
+Engine-owned `#engine-story-canvas` inside the shared package tab and rejects a
+black result. The external shared Workbench owns navigation and diagnostics;
+the preview canvas, production Renderer and perspective camera remain Engine-owned.
 
-For a visual change, use `$storybook` to verify the exact story, WebGPU canvas, console, and a
+For a visual change, use the external Storybook to verify the exact story, WebGPU canvas, console, and a
 non-black rendered result with the browser tooling available to the task. Keep
 WebGPU Inspector external to source and build output. Performance claims need a
 representative workload and recorded CPU, allocation/upload, draw/dispatch,
 latency, frame, and memory evidence.
 
 At handoff report the checkout and revision, focused and repository checks,
-static build, exact live route where applicable, console/visual/GPU evidence,
+external package check, exact live route where applicable, console/visual/GPU evidence,
 and every remaining consumer or owner gate.

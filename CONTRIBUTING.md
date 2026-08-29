@@ -17,13 +17,14 @@ bun install
 bun run check
 ```
 
-Use `$storybook ensure @engine/storybook` so lifecycle and browser evidence
-remain package-named.
+Run one external Storybook server against this repository declaration when a
+live package-tab check is required. Engine owns no package-local lifecycle.
 
 ## Working boundaries
 
 - `packages/core` owns reusable rendering infrastructure only.
-- `packages/storybook` consumes the public `@engine/core` entrypoint.
+- `.storybook/` composes package declarations without becoming a workspace.
+- `packages/core/.storybook/` owns package metadata and the structural preview adapter.
 - UI controls belong in [UI](https://github.com/zavx0z/ui).
 - Node authoring and layout belong in [Node](https://github.com/zavx0z/node).
 - MetaFor domain and product policy belong in [MetaFor](https://github.com/zavx0z/metafor).
@@ -63,14 +64,14 @@ A useful story:
 - builds one bounded scene that demonstrates a real contract;
 - renders through the production `Renderer`;
 - supplies a camera preset, concise source sample, tags, and source path;
-- works from the static `/engine/` project base;
+- keeps its exact declaration route suffix;
 - does not use a screenshot as a substitute for live output;
 - remains legible when WebGPU is unavailable by exposing metadata and an error state.
 
-The repository app gives each story one exact three-level pathname. Overview
-prefixes end in `/`; leaves do not. Unknown routes must fail closed. Keep eager
-metadata small and load every scene implementation through its own dynamic
-import.
+The package catalog gives each story one exact three-level pathname. Overview
+prefixes end in `/`; leaves do not. Unknown routes must fail closed. Keep JSON
+metadata small; executable loader functions are generated only by the external
+tool and never live in owner code.
 
 Stories render on demand. Do not introduce an unconditional animation loop for a static contract.
 
@@ -79,19 +80,26 @@ Stories render on demand. Do not introduce an unconditional animation loop for a
 ```bash
 bun run typecheck
 bun run test
-bun run --cwd packages/storybook build
+bun run test:ci
 git diff --check
 ```
 
-`bun run check` runs the first three in order. The WebGPU pipeline tests compile and execute shaders with `bun-webgpu`; they are not string-only placeholders.
+`bun run check` runs typecheck and the full test suite. The WebGPU pipeline tests
+compile and execute shaders with `bun-webgpu`; they are not string-only placeholders.
 
-Before handing off a visual change, also inspect the live story in a WebGPU browser and check the console. A successful static build does not prove visual correctness.
+Before handing off a visual change, also inspect the live package-tab story in
+a WebGPU browser and check the console. A successful external package build
+does not prove visual correctness.
 
 ## Generated output
 
-Do not commit `dist/`, dependency directories, logs, or local environment files. GitHub Actions checks out Engine and its exact Renderer, UI, Highlighter, and shared Storybook revisions into sibling directories so dependency setup cannot dirty the Engine identity. It registers their direct package owners, then builds the Pages artifact from every locked install with `bun install --frozen-lockfile`. The job rejects a static manifest when the source or any dependency reports `dirty: true`.
+Do not commit `dist/`, dependency directories, logs, or local environment files.
+External Storybook validates the declaration and package revision without
+installing itself into Engine. Deployment remains a separate owner action.
 
-The workflow deploys only after checks pass. Enabling Pages, changing repository settings, publishing packages, or updating sibling consumers are separate owner-controlled actions.
+A future owner-authorized deployment may run only after checks pass. Enabling
+Pages, changing repository settings, publishing packages, or updating sibling
+consumers are separate owner-controlled actions.
 
 ## Cross-repository delivery
 
