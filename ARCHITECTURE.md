@@ -54,12 +54,15 @@ each exact module/export and preserves the five accepted route suffixes. The
 external compiler generates literal lazy imports and independently versions
 the `@engine/core` package session.
 
-The plain `storybook-runtime/1` adapter imports only the public `@engine/core`
-owner and the local story contract. The shared Workbench supplies one semantic
-preview host and atomically attaches the selected owner `Space` as a bounded
-view of the existing package-tab `DocumentSpaceRuntime`. The shared host owns
-the one native canvas, Renderer, host-mode ViewPoint, input and frame lifecycle.
-The adapter publishes metadata/source/props structurally; it does not own
+The plain `storybook-runtime/3` adapter uses the public `@engine/core` owner and
+a Storybook-owned compiled TSX preview anchor. All five subjects declare
+`story-presentation/1` with `projection: "world"`. A selected story contributes
+one `Object3D` root, background and camera; the stage attaches/detaches that root
+on exact `context.space === DocumentSpaceRuntime.space` and restores the prior
+background. The shared host owns the one semantic Document, native Canvas,
+Renderer, Space, ViewPoint, input and frame lifecycle; neither story nor adapter
+creates another presentation owner. The adapter publishes node/root/source/props
+through one atomic `context.present`; it does not own
 navigation, search, routing, diagnostics, package lifecycle or another
 presentation host.
 
