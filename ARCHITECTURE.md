@@ -166,7 +166,7 @@ packages/core/
     scenes/      root spaces
     text/        TrueType decoding and mesh text
     types/       asset-module declarations
-  static/fonts/  accepted runtime font asset
+  static/fonts/  accepted runtime font assets, licenses and provenance
   test/          package-local test support
 ```
 

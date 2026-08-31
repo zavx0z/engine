@@ -16,6 +16,7 @@
     "packages/*"
   ],
   "scripts": {
+    "build:font": "bun tools/fonts/build-inter-regular.ts",
     "check": "bun run typecheck && bun run test",
     "check:ci": "bun run typecheck && bun run test:ci",
     "test": "bun test packages",
