@@ -106,6 +106,12 @@ and storage/order pipeline on top of that ABI. Consecutive draw-range views
 share the same stable slots; they are Engine objects, not UI components, and
 carry no DOM, hit-test or Node semantics.
 
+TrueType text keeps one weak font-owned glyph cache and one bounded string
+layout cache. Glyph stencil/cover geometry is reusable only for the exact font
+identity and glyph id. Cover bounds include the glyph advance cell so retained
+text uses font side bearings instead of consumer padding or per-frame geometry
+expansion.
+
 ### Bounded view composition
 
 One initialized `Renderer` can present a base `Space`, ordered bounded
