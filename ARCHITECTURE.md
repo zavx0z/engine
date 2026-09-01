@@ -106,6 +106,15 @@ and storage/order pipeline on top of that ABI. Consecutive draw-range views
 share the same stable slots; they are Engine objects, not UI components, and
 carry no DOM, hit-test or Node semantics.
 
+The analytical stroked-path slice uses the same retained law with independent
+32-byte style and sampled-segment records. Every segment references a stable
+physical style slot and generation, while dense segment order and consecutive
+draw-range views control presentation. One shared run transform, exact
+presentation clip chains and one indexed instanced capsule draw replace
+per-segment objects without moving document, graph or authoring semantics into
+Engine. This capsule batch is an opaque fast path; continuous translucent paths
+remain on a connected scalar geometry owner.
+
 TrueType text keeps one weak font-owned glyph cache and one bounded string
 layout cache. Glyph stencil/cover geometry is reusable only for the exact font
 identity and glyph id. Cover bounds include the glyph advance cell so retained

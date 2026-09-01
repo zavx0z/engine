@@ -15,7 +15,8 @@ The current core was migrated from the accepted `pkg/engine` implementation at M
 - Millimetre-based, right-handed, Z-up spatial coordinates.
 - Demand-driven frames for interfaces that are often idle.
 - Shared geometry, generation-safe instance layers, bounded partial uploads,
-  and a shared-unit-quad `InstancedRoundedRect` storage/order pipeline.
+  a shared-unit-quad `InstancedRoundedRect` pipeline, and an opaque analytical
+  `InstancedStrokedPath` fast path with a continuous scalar fallback boundary.
 - Analytical materials for common interface effects without texture or post-processing overhead.
 - A single source-level package boundary that is reusable beyond MetaFor.
 
